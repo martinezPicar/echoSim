@@ -113,7 +113,7 @@ blocks:
     bus_structure: null
     coordinate: [816, 12.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: overSW
   id: variable_qtgui_push_button
   parameters:
@@ -155,7 +155,7 @@ blocks:
     position: '4'
     pressed: '1'
     released: '0'
-    switchOffBackground: gray
+    switchOffBackground: white
     switchOnBackground: green
     type: int
     value: '0'
@@ -166,7 +166,7 @@ blocks:
     bus_structure: null
     coordinate: [616, 12.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: analog_const_source_x_0
   id: analog_const_source_x
   parameters:
@@ -271,7 +271,6 @@ blocks:
     offset: '0'
     phase: '0'
     samp_rate: samp_rate
-    showports: 'False'
     type: complex
     waveform: analog.GR_SIN_WAVE
   states:
@@ -1123,4 +1122,3 @@ connections:
 
 metadata:
   file_format: 1
-  grc_version: 3.10.7.0
