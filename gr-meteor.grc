@@ -28,7 +28,7 @@ options:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [8, 8]
+    coordinate: [8, 12.0]
     rotation: 0
     state: enabled
 
@@ -236,7 +236,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [8, 116.0]
+    coordinate: [8, 124.0]
     rotation: 0
     state: enabled
 - name: analog_random_uniform_source_x_0
@@ -314,6 +314,28 @@ blocks:
     coordinate: [1208, 400.0]
     rotation: 0
     state: disabled
+- name: blocks_file_source_0
+  id: blocks_file_source
+  parameters:
+    affinity: ''
+    alias: ''
+    begin_tag: pmt.PMT_NIL
+    comment: Underdense echo
+    file: /home/suntech/sw/echoSim/underdense_echo_vector.dat
+    length: '0'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    offset: '0'
+    repeat: 'False'
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1000, 148.0]
+    rotation: 0
+    state: true
 - name: blocks_float_to_complex_0
   id: blocks_float_to_complex
   parameters:
@@ -590,9 +612,9 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    high: '0.9999'
+    high: '0.999999'
     init: '0'
-    low: '0.9999'
+    low: '0.999999'
     maxoutbuf: '0'
     minoutbuf: '0'
   states:
@@ -619,7 +641,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [8, 492.0]
+    coordinate: [8, 540.0]
     rotation: 0
     state: enabled
 - name: blocks_vector_source_x_0_0
@@ -976,7 +998,7 @@ blocks:
     marker7: '-1'
     marker8: '-1'
     marker9: '-1'
-    name: '""'
+    name: Random Trigger
     nconnections: '1'
     size: '1024'
     srate: samp_rate
