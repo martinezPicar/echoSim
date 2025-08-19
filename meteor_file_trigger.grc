@@ -1,0 +1,85 @@
+<?xml version='1.0' encoding='utf-8'?>
+<flow_graph>
+  <block id="options">
+    <key>options</key>
+    <param>
+      <key>id</key>
+      <value>meteor_file_trigger</value>
+    </param>
+    <param>
+      <key>title</key>
+      <value>Meteor Echo Triggered Playback</value>
+    </param>
+    <param>
+      <key>author</key>
+      <value>ChatGPT</value>
+    </param>
+    <param>
+      <key>description</key>
+      <value>Plays precomputed meteor echo waveform whenever triggered by Message Strobe.</value>
+    </param>
+    <param>
+      <key>generate_options</key>
+      <value>qt_gui</value>
+    </param>
+  </block>
+
+  <block id="blocks_file_source_0">
+    <key>blocks_file_source</key>
+    <param>
+      <key>file</key>
+      <value>meteor_echo_vector.dat</value>
+    </param>
+    <param>
+      <key>type</key>
+      <value>float</value>
+    </param>
+    <param>
+      <key>repeat</key>
+      <value>False</value>
+    </param>
+    <param>
+      <key>vlen</key>
+      <value>1</value>
+    </param>
+  </block>
+
+  <block id="blocks_null_sink_0">
+    <key>blocks_null_sink</key>
+    <param>
+      <key>type</key>
+      <value>float</value>
+    </param>
+    <param>
+      <key>vlen</key>
+      <value>1</value>
+    </param>
+  </block>
+
+  <block id="blocks_message_strobe_0">
+    <key>blocks_message_strobe</key>
+    <param>
+      <key>msg</key>
+      <value>pmt.intern("open")</value>
+    </param>
+    <param>
+      <key>period</key>
+      <value>2000</value>
+    </param>
+  </block>
+
+  <connection>
+    <source_block_id>blocks_file_source_0</source_block_id>
+    <sink_block_id>blocks_null_sink_0</sink_block_id>
+    <source_key>0</source_key>
+    <sink_key>0</sink_key>
+  </connection>
+
+  <connection>
+    <source_block_id>blocks_message_strobe_0</source_block_id>
+    <sink_block_id>blocks_file_source_0</sink_block_id>
+    <source_key>strobe</source_key>
+    <sink_key>command</sink_key>
+  </connection>
+</flow_graph>
+

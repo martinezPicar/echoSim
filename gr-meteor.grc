@@ -271,6 +271,7 @@ blocks:
     offset: '0'
     phase: '0'
     samp_rate: samp_rate
+    showports: 'False'
     type: complex
     waveform: analog.GR_SIN_WAVE
   states:
@@ -403,6 +404,23 @@ blocks:
     coordinate: [224.0, 808]
     rotation: 90
     state: disabled
+- name: blocks_message_strobe_0
+  id: blocks_message_strobe
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    msg: pmt.intern("TEST")
+    period: '1000'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [832, 268.0]
+    rotation: 0
+    state: true
 - name: blocks_multiply_xx_0
   id: blocks_multiply_xx
   parameters:
@@ -1144,3 +1162,4 @@ connections:
 
 metadata:
   file_format: 1
+  grc_version: 3.10.7.0
