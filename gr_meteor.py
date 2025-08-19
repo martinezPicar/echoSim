@@ -7,40 +7,28 @@
 # GNU Radio Python Flow Graph
 # Title: Meteor Scatter Simulation
 # Author: amp
-# GNU Radio version: 3.10.1.1
+# GNU Radio version: 3.10.7.0
 
 from packaging.version import Version as StrictVersion
-
-if __name__ == '__main__':
-    import ctypes
-    import sys
-    if sys.platform.startswith('linux'):
-        try:
-            x11 = ctypes.cdll.LoadLibrary('libX11.so')
-            x11.XInitThreads()
-        except:
-            print("Warning: failed to XInitThreads()")
-
 from PyQt5 import Qt
 from gnuradio import qtgui
-from gnuradio.filter import firdes
-import sip
 from gnuradio import analog
 from gnuradio import blocks
 from gnuradio import gr
+from gnuradio.filter import firdes
 from gnuradio.fft import window
 import sys
 import signal
+from PyQt5 import Qt
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
 from gnuradio.qtgui import Range, RangeWidget
 from PyQt5 import QtCore
 import numpy as np
+import sip
 
 
-
-from gnuradio import qtgui
 
 class gr_meteor(gr.top_block, Qt.QWidget):
 
@@ -51,8 +39,8 @@ class gr_meteor(gr.top_block, Qt.QWidget):
         qtgui.util.check_set_qss()
         try:
             self.setWindowIcon(Qt.QIcon.fromTheme('gnuradio-grc'))
-        except:
-            pass
+        except BaseException as exc:
+            print(f"Qt GUI: Could not set Icon: {str(exc)}", file=sys.stderr)
         self.top_scroll_layout = Qt.QVBoxLayout()
         self.setLayout(self.top_scroll_layout)
         self.top_scroll = Qt.QScrollArea()
@@ -72,13 +60,15 @@ class gr_meteor(gr.top_block, Qt.QWidget):
                 self.restoreGeometry(self.settings.value("geometry").toByteArray())
             else:
                 self.restoreGeometry(self.settings.value("geometry"))
-        except:
-            pass
+        except BaseException as exc:
+            print(f"Qt GUI: Could not restore geometry: {str(exc)}", file=sys.stderr)
 
         ##################################################
         # Variables
         ##################################################
+        self.underSW = underSW = 0
         self.samp_rate = samp_rate = 100e3
+        self.overSW = overSW = 0
         self.noiseLevel = noiseLevel = 0.05
         self.fade_rate = fade_rate = 0.5
         self.center_freq = center_freq = 49.97e6
@@ -87,12 +77,23 @@ class gr_meteor(gr.top_block, Qt.QWidget):
         ##################################################
         # Blocks
         ##################################################
+
         self._noiseLevel_range = Range(0, 1, 0.05, 0.05, 200)
         self._noiseLevel_win = RangeWidget(self._noiseLevel_range, self.set_noiseLevel, "Noise Level", "slider", float, QtCore.Qt.Horizontal)
         self.top_grid_layout.addWidget(self._noiseLevel_win, 0, 2, 1, 6)
         for r in range(0, 1):
             self.top_grid_layout.setRowStretch(r, 1)
         for c in range(2, 8):
+            self.top_grid_layout.setColumnStretch(c, 1)
+        self._underSW_choices = {'Pressed': 1, 'Released': 0}
+
+        _underSW_toggle_switch = qtgui.GrToggleSwitch(self.set_underSW, 'Underdense', self._underSW_choices, False, "green", "gray", 4, 50, 1, 1, self, 'value')
+        self.underSW = _underSW_toggle_switch
+
+        self.top_grid_layout.addWidget(_underSW_toggle_switch, 0, 0, 1, 1)
+        for r in range(0, 1):
+            self.top_grid_layout.setRowStretch(r, 1)
+        for c in range(0, 1):
             self.top_grid_layout.setColumnStretch(c, 1)
         self.qtgui_time_sink_x_0_0 = qtgui.time_sink_c(
             1024, #size
@@ -171,6 +172,16 @@ class gr_meteor(gr.top_block, Qt.QWidget):
             self.top_grid_layout.setRowStretch(r, 1)
         for c in range(0, 4):
             self.top_grid_layout.setColumnStretch(c, 1)
+        self._overSW_choices = {'Pressed': 1, 'Released': 0}
+
+        _overSW_toggle_switch = qtgui.GrToggleSwitch(self.set_overSW, 'Overderdense', self._overSW_choices, False, "green", "gray", 4, 50, 1, 1, self, 'value')
+        self.overSW = _overSW_toggle_switch
+
+        self.top_grid_layout.addWidget(_overSW_toggle_switch, 0, 1, 1, 1)
+        for r in range(0, 1):
+            self.top_grid_layout.setRowStretch(r, 1)
+        for c in range(1, 2):
+            self.top_grid_layout.setColumnStretch(c, 1)
         self.blocks_vector_source_x_0_0 = blocks.vector_source_c(np.concatenate([np.linspace(0,1,int(0.01*samp_rate)), 0.8+0.2*np.sin(2*np.pi*fade_rate*np.linspace(0,burst_duration-0.11,int((burst_duration-0.11)*samp_rate))), np.linspace(0.8,0,int(0.1*samp_rate))]), True, 1, [])
         self.blocks_vector_source_x_0 = blocks.vector_source_c(([0.0]*100000 + [np.exp(-x/4000.0) for x in range(10000)] + [0.0]*100000), True, 1, [])
         self.blocks_threshold_ff_1 = blocks.threshold_ff(0.9999, 0.9999, 0)
@@ -222,6 +233,12 @@ class gr_meteor(gr.top_block, Qt.QWidget):
 
         event.accept()
 
+    def get_underSW(self):
+        return self.underSW
+
+    def set_underSW(self, underSW):
+        self.underSW = underSW
+
     def get_samp_rate(self):
         return self.samp_rate
 
@@ -231,6 +248,12 @@ class gr_meteor(gr.top_block, Qt.QWidget):
         self.blocks_vector_source_x_0_0.set_data(np.concatenate([np.linspace(0,1,int(0.01*self.samp_rate)), 0.8+0.2*np.sin(2*np.pi*self.fade_rate*np.linspace(0,self.burst_duration-0.11,int((self.burst_duration-0.11)*self.samp_rate))), np.linspace(0.8,0,int(0.1*self.samp_rate))]), [])
         self.qtgui_sink_x_0.set_frequency_range(self.center_freq, self.samp_rate)
         self.qtgui_time_sink_x_0_0.set_samp_rate(self.samp_rate)
+
+    def get_overSW(self):
+        return self.overSW
+
+    def set_overSW(self, overSW):
+        self.overSW = overSW
 
     def get_noiseLevel(self):
         return self.noiseLevel
