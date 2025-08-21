@@ -181,26 +181,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [24, 372.0]
+    coordinate: [16, 320.0]
     rotation: 0
     state: true
-- name: analog_const_source_x_1
-  id: analog_const_source_x
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    const: '0'
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    type: float
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [652.0, 936]
-    rotation: 90
-    state: disabled
 - name: analog_noise_source_x_0
   id: analog_noise_source_x
   parameters:
@@ -236,28 +219,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [8, 124.0]
+    coordinate: [8, 144.0]
     rotation: 0
     state: enabled
-- name: analog_random_uniform_source_x_0
-  id: analog_random_uniform_source_x
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maximum: '1'
-    maxoutbuf: '0'
-    minimum: '0'
-    minoutbuf: '0'
-    seed: '0'
-    type: int
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [16, 980.0]
-    rotation: 0
-    state: disabled
 - name: analog_sig_source_x_0
   id: analog_sig_source_x
   parameters:
@@ -278,7 +242,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [360, 196.0]
+    coordinate: [536, 192.0]
     rotation: 0
     state: enabled
 - name: blocks_add_xx_0
@@ -315,44 +279,6 @@ blocks:
     coordinate: [1208, 400.0]
     rotation: 0
     state: disabled
-- name: blocks_file_source_0
-  id: blocks_file_source
-  parameters:
-    affinity: ''
-    alias: ''
-    begin_tag: pmt.PMT_NIL
-    comment: Underdense echo
-    file: /home/suntech/sw/echoSim/underdense_echo_vector.dat
-    length: '0'
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    offset: '0'
-    repeat: 'False'
-    type: complex
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1000, 148.0]
-    rotation: 0
-    state: true
-- name: blocks_float_to_complex_0
-  id: blocks_float_to_complex
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [536.0, 816]
-    rotation: 90
-    state: disabled
 - name: blocks_float_to_complex_1
   id: blocks_float_to_complex
   parameters:
@@ -367,58 +293,6 @@ blocks:
     bus_source: false
     bus_structure: null
     coordinate: [216, 320.0]
-    rotation: 0
-    state: true
-- name: blocks_int_to_float_0
-  id: blocks_int_to_float
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    scale: '1'
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [232, 996.0]
-    rotation: 0
-    state: disabled
-- name: blocks_keep_one_in_n_0
-  id: blocks_keep_one_in_n
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    n: '100000'
-    type: complex
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [224.0, 808]
-    rotation: 90
-    state: disabled
-- name: blocks_message_strobe_0
-  id: blocks_message_strobe
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    msg: pmt.intern("TEST")
-    period: '1000'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [832, 268.0]
     rotation: 0
     state: true
 - name: blocks_multiply_xx_0
@@ -436,7 +310,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [632, 512.0]
+    coordinate: [744, 440.0]
     rotation: 0
     state: enabled
 - name: blocks_multiply_xx_0_0
@@ -456,7 +330,7 @@ blocks:
     bus_structure: null
     coordinate: [416, 536.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: blocks_multiply_xx_0_0_0
   id: blocks_multiply_xx
   parameters:
@@ -474,7 +348,7 @@ blocks:
     bus_structure: null
     coordinate: [424, 632.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: blocks_multiply_xx_0_1
   id: blocks_multiply_xx
   parameters:
@@ -492,7 +366,7 @@ blocks:
     bus_structure: null
     coordinate: [632, 640.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: blocks_multiply_xx_0_2
   id: blocks_multiply_xx
   parameters:
@@ -529,25 +403,6 @@ blocks:
     coordinate: [1336, 452.0]
     rotation: 0
     state: disabled
-- name: blocks_null_source_0
-  id: blocks_null_source
-  parameters:
-    affinity: ''
-    alias: ''
-    bus_structure_source: '[[0,],]'
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    num_outputs: '1'
-    type: float
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [24, 264.0]
-    rotation: 0
-    state: disabled
 - name: blocks_null_source_0_0
   id: blocks_null_source
   parameters:
@@ -564,9 +419,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [176, 424.0]
+    coordinate: [256, 480.0]
     rotation: 0
-    state: true
+    state: disabled
 - name: blocks_null_source_0_0_0
   id: blocks_null_source
   parameters:
@@ -585,61 +440,42 @@ blocks:
     bus_structure: null
     coordinate: [192, 608.0]
     rotation: 0
-    state: true
-- name: blocks_tagged_stream_mux_0
-  id: blocks_tagged_stream_mux
+    state: disabled
+- name: blocks_null_source_0_0_0_0
+  id: blocks_null_source
   parameters:
     affinity: ''
     alias: ''
+    bus_structure_source: '[[0,],]'
     comment: ''
-    lengthtagname: ''
     maxoutbuf: '0'
     minoutbuf: '0'
-    ninputs: '2'
-    tag_preserve_head_pos: '0'
+    num_outputs: '1'
     type: complex
     vlen: '1'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [304, 744.0]
+    coordinate: [848, 488.0]
     rotation: 0
-    state: disabled
-- name: blocks_threshold_ff_0
-  id: blocks_threshold_ff
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    high: '0.95'
-    init: '0'
-    low: '-100'
-    maxoutbuf: '0'
-    minoutbuf: '0'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [400, 980.0]
-    rotation: 0
-    state: disabled
+    state: enabled
 - name: blocks_threshold_ff_1
   id: blocks_threshold_ff
   parameters:
     affinity: ''
     alias: ''
     comment: ''
-    high: '0.999999'
+    high: '0.5'
     init: '0'
-    low: '0.999999'
+    low: '0'
     maxoutbuf: '0'
     minoutbuf: '0'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [152, 188.0]
+    coordinate: [152, 208.0]
     rotation: 0
     state: true
 - name: blocks_vector_source_x_0
@@ -659,7 +495,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [8, 540.0]
+    coordinate: [16, 400.0]
     rotation: 0
     state: enabled
 - name: blocks_vector_source_x_0_0
@@ -682,7 +518,7 @@ blocks:
     bus_structure: null
     coordinate: [16, 644.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: blocks_vector_source_x_0_0_0
   id: blocks_vector_source_x
   parameters:
@@ -720,7 +556,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [792, 692.0]
+    coordinate: [816, 640.0]
     rotation: 0
     state: disabled
 - name: freq_xlating_fir_filter_xxx_0_0
@@ -854,7 +690,7 @@ blocks:
     plotfreq: 'False'
     plottime: 'False'
     plotwaterfall: 'True'
-    rate: '10'
+    rate: '5'
     showports: 'False'
     showrf: 'True'
     type: complex
@@ -1057,7 +893,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [640, 356.0]
+    coordinate: [368, 160.0]
     rotation: 0
     state: enabled
 - name: qtgui_waterfall_sink_x_0
@@ -1124,10 +960,8 @@ blocks:
 
 connections:
 - [analog_const_source_x_0, '0', blocks_float_to_complex_1, '1']
-- [analog_const_source_x_1, '0', blocks_float_to_complex_0, '1']
 - [analog_noise_source_x_0, '0', blocks_add_xx_0, '0']
 - [analog_noise_source_x_0_0, '0', blocks_threshold_ff_1, '0']
-- [analog_random_uniform_source_x_0, '0', blocks_int_to_float_0, '0']
 - [analog_sig_source_x_0, '0', blocks_add_xx_0, '1']
 - [analog_sig_source_x_0, '0', blocks_multiply_xx_0, '0']
 - [analog_sig_source_x_0, '0', blocks_multiply_xx_0_1, '0']
@@ -1136,11 +970,8 @@ connections:
 - [blocks_add_xx_0, '0', qtgui_sink_x_0, '0']
 - [blocks_add_xx_0, '0', qtgui_waterfall_sink_x_0, '0']
 - [blocks_complex_to_mag_squared_0, '0', blocks_nlog10_ff_0, '0']
-- [blocks_float_to_complex_0, '0', blocks_keep_one_in_n_0, '0']
 - [blocks_float_to_complex_1, '0', blocks_multiply_xx_0_2, '0']
 - [blocks_float_to_complex_1, '0', qtgui_time_sink_x_0_0, '0']
-- [blocks_int_to_float_0, '0', blocks_threshold_ff_0, '0']
-- [blocks_keep_one_in_n_0, '0', blocks_tagged_stream_mux_0, '1']
 - [blocks_multiply_xx_0, '0', blocks_add_xx_0, '2']
 - [blocks_multiply_xx_0, '0', freq_xlating_fir_filter_xxx_0, '0']
 - [blocks_multiply_xx_0_0, '0', blocks_multiply_xx_0_2, '1']
@@ -1149,17 +980,16 @@ connections:
 - [blocks_multiply_xx_0_1, '0', freq_xlating_fir_filter_xxx_0_0, '0']
 - [blocks_multiply_xx_0_2, '0', blocks_multiply_xx_0, '1']
 - [blocks_nlog10_ff_0, '0', qtgui_time_sink_x_0, '0']
-- [blocks_null_source_0, '0', blocks_float_to_complex_1, '1']
 - [blocks_null_source_0_0, '0', blocks_multiply_xx_0_0, '0']
 - [blocks_null_source_0_0_0, '0', blocks_multiply_xx_0_0_0, '0']
-- [blocks_tagged_stream_mux_0, '0', blocks_multiply_xx_0_0_0, '1']
-- [blocks_threshold_ff_0, '0', blocks_float_to_complex_0, '0']
+- [blocks_null_source_0_0_0_0, '0', blocks_add_xx_0, '3']
 - [blocks_threshold_ff_1, '0', blocks_float_to_complex_1, '0']
-- [blocks_vector_source_x_0, '0', blocks_multiply_xx_0_0, '1']
+- [blocks_vector_source_x_0, '0', blocks_multiply_xx_0_2, '1']
 - [blocks_vector_source_x_0_0, '0', blocks_multiply_xx_0_0_0, '1']
+- [blocks_vector_source_x_0_0, '0', blocks_multiply_xx_0_2, '1']
 - [freq_xlating_fir_filter_xxx_0, '0', blocks_add_xx_0, '2']
 - [freq_xlating_fir_filter_xxx_0_0, '0', blocks_add_xx_0, '3']
 
 metadata:
   file_format: 1
-  grc_version: 3.10.7.0
+  grc_version: 3.10.9.2
