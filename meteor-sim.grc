@@ -89,13 +89,14 @@ blocks:
     offset: '0'
     phase: '0'
     samp_rate: samp_rate
+    showports: 'False'
     type: complex
     waveform: analog.GR_SIN_WAVE
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [16, 380.0]
+    coordinate: [24, 312.0]
     rotation: 0
     state: enabled
 - name: blocks_add_xx_0
@@ -151,7 +152,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [16, 540.0]
+    coordinate: [24, 512.0]
     rotation: 0
     state: true
 - name: freq_xlating_fir_filter_xxx_0
@@ -470,3 +471,4 @@ connections:
 
 metadata:
   file_format: 1
+  grc_version: 3.10.9.2
