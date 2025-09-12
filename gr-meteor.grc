@@ -603,7 +603,7 @@ blocks:
   parameters:
     affinity: ''
     alias: doppler_shift
-    center_freq: '15'
+    center_freq: '-10'
     comment: Doppler Shift
     decim: '1'
     maxoutbuf: '0'

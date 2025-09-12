@@ -122,7 +122,7 @@ class gr_meteor(gr.top_block, Qt.QWidget):
             self.top_grid_layout.setRowStretch(r, 1)
         for c in range(0, 2):
             self.top_grid_layout.setColumnStretch(c, 1)
-        self.freq_xlating_fir_filter_xxx_0_1 = filter.freq_xlating_fir_filter_ccc(1, [1], 15, samp_rate)
+        self.freq_xlating_fir_filter_xxx_0_1 = filter.freq_xlating_fir_filter_ccc(1, [1], (-10), samp_rate)
         self.freq_xlating_fir_filter_xxx_0_1.set_block_alias("doppler_shift")
         self.epy_block_0 = epy_block_0.blk()
         self.blocks_vector_source_x_0 = blocks.vector_source_c(([0.0]*100000 + [np.exp(-x/4000.0) for x in range(10000)] + [0.0]*100000), True, 1, [])
