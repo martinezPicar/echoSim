@@ -7,11 +7,11 @@
 # GNU Radio Python Flow Graph
 # Title: Meteor Scatter Simulation
 # Author: amp
-# GNU Radio version: 3.10.9.2
+# GNU Radio version: 3.10.7.0
 
+from packaging.version import Version as StrictVersion
 from PyQt5 import Qt
 from gnuradio import qtgui
-from PyQt5 import QtCore
 from gnuradio import analog
 from gnuradio import blocks
 from gnuradio import filter
@@ -24,6 +24,8 @@ from PyQt5 import Qt
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
+from gnuradio.qtgui import Range, RangeWidget
+from PyQt5 import QtCore
 import gr_meteor_epy_block_0 as epy_block_0  # embedded python block
 import numpy as np
 import sip
@@ -56,9 +58,10 @@ class gr_meteor(gr.top_block, Qt.QWidget):
         self.settings = Qt.QSettings("GNU Radio", "gr_meteor")
 
         try:
-            geometry = self.settings.value("geometry")
-            if geometry:
-                self.restoreGeometry(geometry)
+            if StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
+                self.restoreGeometry(self.settings.value("geometry").toByteArray())
+            else:
+                self.restoreGeometry(self.settings.value("geometry"))
         except BaseException as exc:
             print(f"Qt GUI: Could not restore geometry: {str(exc)}", file=sys.stderr)
 
@@ -77,8 +80,8 @@ class gr_meteor(gr.top_block, Qt.QWidget):
         # Blocks
         ##################################################
 
-        self._noiseLevel_range = qtgui.Range(0, 1, 0.05, 0, 200)
-        self._noiseLevel_win = qtgui.RangeWidget(self._noiseLevel_range, self.set_noiseLevel, "Noise Level", "slider", float, QtCore.Qt.Horizontal)
+        self._noiseLevel_range = Range(0, 1, 0.05, 0, 200)
+        self._noiseLevel_win = RangeWidget(self._noiseLevel_range, self.set_noiseLevel, "Noise Level", "slider", float, QtCore.Qt.Horizontal)
         self.top_grid_layout.addWidget(self._noiseLevel_win, 0, 2, 1, 6)
         for r in range(0, 1):
             self.top_grid_layout.setRowStretch(r, 1)
@@ -211,6 +214,9 @@ class gr_meteor(gr.top_block, Qt.QWidget):
 
 def main(top_block_cls=gr_meteor, options=None):
 
+    if StrictVersion("4.5.0") <= StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
+        style = gr.prefs().get_string('qtgui', 'style', 'raster')
+        Qt.QApplication.setGraphicsSystem(style)
     qapp = Qt.QApplication(sys.argv)
 
     tb = top_block_cls()

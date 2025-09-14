@@ -167,7 +167,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [168, 352.0]
+    coordinate: [272, 460.0]
     rotation: 0
     state: enabled
 - name: samp_rate
@@ -406,7 +406,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [304, 504.0]
+    coordinate: [64, 568.0]
     rotation: 0
     state: disabled
 - name: blocks_null_source_0_0_0
@@ -485,7 +485,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [16, 240.0]
+    coordinate: [32, 172.0]
     rotation: 0
     state: enabled
 - name: blocks_vector_source_x_0_0
@@ -555,7 +555,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [24, 168.0]
+    coordinate: [32, 320.0]
     rotation: 0
     state: enabled
 - name: freq_xlating_fir_filter_xxx_0
@@ -1032,4 +1032,4 @@ connections:
 
 metadata:
   file_format: 1
-  grc_version: 3.10.9.2
+  grc_version: 3.10.7.0
