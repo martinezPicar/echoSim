@@ -99,7 +99,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [480, 12.0]
+    coordinate: [440, 16.0]
     rotation: 0
     state: true
 - name: overSW
@@ -154,12 +154,12 @@ blocks:
     fontColor: default
     gui_hint: 0,0,1,2
     isVertical: 'False'
-    label: Doppler
-    maximum: '-10'
-    minimum: '-10'
+    label: 'Doppler:'
+    maximum: '100'
+    minimum: '-100'
     msize: '100'
-    position: '1'
-    scaleFactor: '1'
+    position: '2'
+    scaleFactor: '100'
     showValue: 'True'
     type: real
     value: dShift
@@ -167,14 +167,14 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [272, 460.0]
+    coordinate: [296, 472.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: samp_rate
   id: variable
   parameters:
     comment: ''
-    value: 1e3
+    value: 1.2e3
   states:
     bus_sink: false
     bus_source: false
@@ -211,7 +211,7 @@ blocks:
   parameters:
     affinity: ''
     alias: ''
-    amp: noiseLevel
+    amp: noiseLevel/10
     comment: Noise
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -245,7 +245,24 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [528, 168.0]
+    coordinate: [496, 168.0]
+    rotation: 0
+    state: enabled
+- name: audio_sink_0
+  id: audio_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    device_name: ''
+    num_inputs: '1'
+    ok_to_block: 'True'
+    samp_rate: '16000'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1112, 624.0]
     rotation: 0
     state: enabled
 - name: blocks_add_xx_0
@@ -256,14 +273,30 @@ blocks:
     comment: ''
     maxoutbuf: '0'
     minoutbuf: '0'
-    num_inputs: '4'
+    num_inputs: '3'
     type: complex
     vlen: '1'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1096, 352.0]
+    coordinate: [896, 336.0]
+    rotation: 0
+    state: enabled
+- name: blocks_complex_to_mag_0
+  id: blocks_complex_to_mag
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1184, 512.0]
     rotation: 0
     state: enabled
 - name: blocks_complex_to_mag_squared_0
@@ -297,7 +330,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [720, 400.0]
+    coordinate: [720, 384.0]
     rotation: 0
     state: enabled
 - name: blocks_multiply_xx_0_0
@@ -333,7 +366,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [424, 632.0]
+    coordinate: [408, 672.0]
     rotation: 0
     state: disabled
 - name: blocks_multiply_xx_0_1
@@ -369,7 +402,25 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [528, 488.0]
+    coordinate: [432, 448.0]
+    rotation: 0
+    state: disabled
+- name: blocks_multiply_xx_0_2_0
+  id: blocks_multiply_xx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_inputs: '2'
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [792, 504.0]
     rotation: 0
     state: disabled
 - name: blocks_nlog10_ff_0
@@ -390,6 +441,23 @@ blocks:
     coordinate: [1336, 452.0]
     rotation: 0
     state: disabled
+- name: blocks_null_sink_0
+  id: blocks_null_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    bus_structure_sink: '[[0,],]'
+    comment: ''
+    num_inputs: '1'
+    type: float
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [296, 416.0]
+    rotation: 0
+    state: disabled
 - name: blocks_null_source_0_0
   id: blocks_null_source
   parameters:
@@ -406,7 +474,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [64, 568.0]
+    coordinate: [336, 568.0]
     rotation: 0
     state: disabled
 - name: blocks_null_source_0_0_0
@@ -425,28 +493,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [192, 608.0]
+    coordinate: [272, 640.0]
     rotation: 0
     state: disabled
-- name: blocks_null_source_0_0_0_0
-  id: blocks_null_source
-  parameters:
-    affinity: ''
-    alias: ''
-    bus_structure_source: '[[0,],]'
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    num_outputs: '1'
-    type: complex
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [824, 496.0]
-    rotation: 0
-    state: enabled
 - name: blocks_throttle2_0
   id: blocks_throttle2
   parameters:
@@ -465,9 +514,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1144, 200.0]
+    coordinate: [1024, 296.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: blocks_vector_source_x_0
   id: blocks_vector_source_x
   parameters:
@@ -485,7 +534,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [32, 172.0]
+    coordinate: [40, 272.0]
     rotation: 0
     state: enabled
 - name: blocks_vector_source_x_0_0
@@ -529,42 +578,67 @@ blocks:
     coordinate: [1072, 716.0]
     rotation: 0
     state: disabled
+- name: blocks_vector_source_x_0_1
+  id: blocks_vector_source_x
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: Underdense Meteor Envelope
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    repeat: 'True'
+    tags: '[]'
+    type: complex
+    vector: ([0.0]*50000 + [np.exp(-x/4000) for x in range(10000)] + [0.0]*150000)
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [32, 520.0]
+    rotation: 0
+    state: disabled
 - name: epy_block_0
   id: epy_block
   parameters:
-    _source_code: "import random\nfrom gnuradio import gr\nimport pmt\n\nclass blk(gr.sync_block):\n\
-      \    def __init__(self):\n        gr.sync_block.__init__(\n            self,\n\
-      \            name=\"RandomFreqUpdater\",\n            in_sig=None,\n       \
-      \     out_sig=None\n        )\n\n        # Add a message output port\n     \
-      \   self.message_port_register_out(pmt.intern(\"freq_out\"))\n\n        self.counter\
-      \ = 0\n        self.current_freq = 0\n\n    def work(self, input_items, output_items):\n\
-      \        self.counter += 1\n\n        if self.counter % 100 == 0:   # update\
-      \ periodically\n            self.current_freq = random.uniform(-10, 10)\n  \
-      \          self.set_var(\"dShift\", self.current_freq)\n\n            # publish\
-      \ as PMT float\n            self.message_port_pub(\n                pmt.intern(\"\
-      freq_out\"),\n                pmt.from_double(self.current_freq)\n         \
-      \   )\n\n        return 0\n\n"
+    _source_code: "import random\nimport numpy as np\nfrom gnuradio import gr\nimport\
+      \ pmt\n\nclass blk(gr.sync_block):\n    def __init__(self):\n        gr.sync_block.__init__(\n\
+      \            self,\n            name=\"Random dShift Publisher\",\n        \
+      \    in_sig=None,\n            out_sig=[np.float32]   # optional float output\
+      \ stream\n        )\n        self.counter = 0\n        self.current_val = 0.0\n\
+      \n        # Message output port for variable updates\n        self.message_port_register_out(pmt.intern(\"\
+      freq_out\"))\n\n    def work(self, input_items, output_items):\n        out\
+      \ = output_items[0]\n\n        for i in range(len(out)):\n            if self.counter\
+      \ % 100 == 0:\n                self.current_val = random.uniform(-15, 15)\n\n\
+      \                # Build PMT pair: (variable name, value)\n                msg\
+      \ = pmt.cons(\n                    pmt.intern(\"dShift\"),\n               \
+      \     pmt.from_double(self.current_val)\n                )\n\n             \
+      \   # Publish the message\n                self.message_port_pub(pmt.intern(\"\
+      freq_out\"), msg)\n\n                # Print to terminal\n                #\
+      \ print(f\"[Random dShift Publisher] dShift = {self.current_val:.3f}\")\n\n\
+      \            out[i] = self.current_val\n            self.counter += 1\n\n  \
+      \      return len(out)\n\n"
     affinity: ''
     alias: ''
     comment: ''
     maxoutbuf: '0'
     minoutbuf: '0'
   states:
-    _io_cache: ('RandomFreqUpdater', 'blk', [], [], [('freq_out', 'message', 1)],
-      '', [])
+    _io_cache: ('Random dShift Publisher', 'blk', [], [], [('0', 'float', 1), ('freq_out',
+      'message', 1)], '', [])
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [32, 320.0]
+    coordinate: [32, 408.0]
     rotation: 0
     state: enabled
 - name: freq_xlating_fir_filter_xxx_0
   id: freq_xlating_fir_filter_xxx
   parameters:
     affinity: ''
-    alias: doppler_shift
-    center_freq: '200'
-    comment: Doppler Shift
+    alias: doppler_shift2
+    center_freq: '10'
+    comment: Doppler Shift +
     decim: '1'
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -575,7 +649,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [816, 640.0]
+    coordinate: [536, 496.0]
     rotation: 0
     state: disabled
 - name: freq_xlating_fir_filter_xxx_0_0
@@ -603,19 +677,19 @@ blocks:
   parameters:
     affinity: ''
     alias: doppler_shift
-    center_freq: '-10'
+    center_freq: '0'
     comment: Doppler Shift
     decim: '1'
     maxoutbuf: '0'
     minoutbuf: '0'
     samp_rate: samp_rate
-    taps: '[1]'
+    taps: firdes.complex_band_pass(1, samp_rate, -samp_rate/(2), samp_rate/(2), 10)
     type: ccc
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [416, 328.0]
+    coordinate: [352, 304.0]
     rotation: 0
     state: true
 - name: import_0
@@ -631,6 +705,30 @@ blocks:
     coordinate: [352, 16.0]
     rotation: 0
     state: true
+- name: low_pass_filter_0
+  id: low_pass_filter
+  parameters:
+    affinity: ''
+    alias: ''
+    beta: '6.76'
+    comment: ''
+    cutoff_freq: '500'
+    decim: '1'
+    gain: '1'
+    interp: '1'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    samp_rate: samp_rate
+    type: fir_filter_ccf
+    width: '200'
+    win: window.WIN_HAMMING
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1008, 396.0]
+    rotation: 0
+    state: enabled
 - name: qtgui_freq_sink_x_0
   id: qtgui_freq_sink_x
   parameters:
@@ -712,6 +810,69 @@ blocks:
     coordinate: [1256, 596.0]
     rotation: 0
     state: disabled
+- name: qtgui_number_sink_0
+  id: qtgui_number_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    autoscale: 'False'
+    avg: '1'
+    color1: ("black", "black")
+    color10: ("black", "black")
+    color2: ("black", "black")
+    color3: ("black", "black")
+    color4: ("black", "black")
+    color5: ("black", "black")
+    color6: ("black", "black")
+    color7: ("black", "black")
+    color8: ("black", "black")
+    color9: ("black", "black")
+    comment: ''
+    factor1: '1'
+    factor10: '1'
+    factor2: '1'
+    factor3: '1'
+    factor4: '1'
+    factor5: '1'
+    factor6: '1'
+    factor7: '1'
+    factor8: '1'
+    factor9: '1'
+    graph_type: qtgui.NUM_GRAPH_HORIZ
+    gui_hint: 0,0,1,2
+    label1: 'Doppler:'
+    label10: ''
+    label2: ''
+    label3: ''
+    label4: ''
+    label5: ''
+    label6: ''
+    label7: ''
+    label8: ''
+    label9: ''
+    max: '15'
+    min: '-15'
+    name: Random Generator
+    nconnections: '1'
+    type: float
+    unit1: Hz
+    unit10: ''
+    unit2: ''
+    unit3: ''
+    unit4: ''
+    unit5: ''
+    unit6: ''
+    unit7: ''
+    unit8: ''
+    unit9: ''
+    update_time: '0.10'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [280, 176.0]
+    rotation: 0
+    state: enabled
 - name: qtgui_sink_x_0
   id: qtgui_sink_x
   parameters:
@@ -738,7 +899,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1328, 152.0]
+    coordinate: [1216, 176.0]
     rotation: 0
     state: enabled
 - name: qtgui_time_sink_x_0
@@ -838,103 +999,6 @@ blocks:
     coordinate: [1400, 508.0]
     rotation: 0
     state: disabled
-- name: qtgui_time_sink_x_0_0
-  id: qtgui_time_sink_x
-  parameters:
-    affinity: ''
-    alias: ''
-    alpha1: '1.0'
-    alpha10: '1.0'
-    alpha2: '1.0'
-    alpha3: '1.0'
-    alpha4: '1.0'
-    alpha5: '1.0'
-    alpha6: '1.0'
-    alpha7: '1.0'
-    alpha8: '1.0'
-    alpha9: '1.0'
-    autoscale: 'False'
-    axislabels: 'True'
-    color1: blue
-    color10: dark blue
-    color2: red
-    color3: green
-    color4: black
-    color5: cyan
-    color6: magenta
-    color7: yellow
-    color8: dark red
-    color9: dark green
-    comment: ''
-    ctrlpanel: 'True'
-    entags: 'True'
-    grid: 'False'
-    gui_hint: 1,4,5,4
-    label1: Signal 1
-    label10: Signal 10
-    label2: Signal 2
-    label3: Signal 3
-    label4: Signal 4
-    label5: Signal 5
-    label6: Signal 6
-    label7: Signal 7
-    label8: Signal 8
-    label9: Signal 9
-    legend: 'True'
-    marker1: '-1'
-    marker10: '-1'
-    marker2: '-1'
-    marker3: '-1'
-    marker4: '-1'
-    marker5: '-1'
-    marker6: '-1'
-    marker7: '-1'
-    marker8: '-1'
-    marker9: '-1'
-    name: Random Trigger
-    nconnections: '1'
-    size: '1024'
-    srate: samp_rate
-    stemplot: 'False'
-    style1: '1'
-    style10: '1'
-    style2: '1'
-    style3: '1'
-    style4: '1'
-    style5: '1'
-    style6: '1'
-    style7: '1'
-    style8: '1'
-    style9: '1'
-    tr_chan: '0'
-    tr_delay: '0'
-    tr_level: '0.0'
-    tr_mode: qtgui.TRIG_MODE_FREE
-    tr_slope: qtgui.TRIG_SLOPE_POS
-    tr_tag: '""'
-    type: complex
-    update_time: '0.10'
-    width1: '1'
-    width10: '1'
-    width2: '1'
-    width3: '1'
-    width4: '1'
-    width5: '1'
-    width6: '1'
-    width7: '1'
-    width8: '1'
-    width9: '1'
-    ylabel: Amplitude
-    ymax: '3'
-    ymin: '-3'
-    yunit: '""'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [352, 208.0]
-    rotation: 0
-    state: disabled
 - name: qtgui_waterfall_sink_x_0
   id: qtgui_waterfall_sink_x
   parameters:
@@ -996,40 +1060,63 @@ blocks:
     coordinate: [1256, 308.0]
     rotation: 0
     state: disabled
+- name: rational_resampler_xxx_0
+  id: rational_resampler_xxx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    decim: '3'
+    fbw: '0'
+    interp: '40'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    taps: firdes.low_pass(1.0,48000,500,200,window.WIN_HAMMING)
+    type: fff
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [888, 600.0]
+    rotation: 0
+    state: enabled
 
 connections:
 - [analog_noise_source_x_0, '0', blocks_add_xx_0, '0']
 - [analog_sig_source_x_0, '0', blocks_add_xx_0, '1']
 - [analog_sig_source_x_0, '0', blocks_multiply_xx_0, '0']
 - [analog_sig_source_x_0, '0', blocks_multiply_xx_0_1, '0']
+- [analog_sig_source_x_0, '0', blocks_multiply_xx_0_2_0, '0']
 - [blocks_add_xx_0, '0', blocks_complex_to_mag_squared_0, '0']
 - [blocks_add_xx_0, '0', blocks_throttle2_0, '0']
 - [blocks_add_xx_0, '0', qtgui_freq_sink_x_0, '0']
-- [blocks_add_xx_0, '0', qtgui_sink_x_0, '0']
 - [blocks_add_xx_0, '0', qtgui_waterfall_sink_x_0, '0']
+- [blocks_complex_to_mag_0, '0', rational_resampler_xxx_0, '0']
 - [blocks_complex_to_mag_squared_0, '0', blocks_nlog10_ff_0, '0']
 - [blocks_multiply_xx_0, '0', blocks_add_xx_0, '2']
-- [blocks_multiply_xx_0, '0', freq_xlating_fir_filter_xxx_0, '0']
 - [blocks_multiply_xx_0_0, '0', blocks_multiply_xx_0_2, '1']
 - [blocks_multiply_xx_0_0_0, '0', blocks_multiply_xx_0_1, '1']
-- [blocks_multiply_xx_0_1, '0', blocks_add_xx_0, '3']
 - [blocks_multiply_xx_0_1, '0', freq_xlating_fir_filter_xxx_0_0, '0']
 - [blocks_multiply_xx_0_2, '0', blocks_multiply_xx_0, '1']
 - [blocks_nlog10_ff_0, '0', qtgui_time_sink_x_0, '0']
 - [blocks_null_source_0_0, '0', blocks_multiply_xx_0_0, '0']
 - [blocks_null_source_0_0_0, '0', blocks_multiply_xx_0_0_0, '0']
-- [blocks_null_source_0_0_0_0, '0', blocks_add_xx_0, '3']
+- [blocks_throttle2_0, '0', low_pass_filter_0, '0']
 - [blocks_throttle2_0, '0', qtgui_sink_x_0, '0']
 - [blocks_vector_source_x_0, '0', blocks_multiply_xx_0_2, '1']
 - [blocks_vector_source_x_0, '0', freq_xlating_fir_filter_xxx_0_1, '0']
 - [blocks_vector_source_x_0_0, '0', blocks_multiply_xx_0_0_0, '1']
 - [blocks_vector_source_x_0_0, '0', blocks_multiply_xx_0_2, '1']
+- [blocks_vector_source_x_0_1, '0', freq_xlating_fir_filter_xxx_0, '0']
+- [epy_block_0, '0', blocks_null_sink_0, '0']
+- [epy_block_0, '0', qtgui_number_sink_0, '0']
 - [epy_block_0, freq_out, freq_xlating_fir_filter_xxx_0_1, freq]
 - [epy_block_0, freq_out, qtgui_levelgauge_0, value]
-- [freq_xlating_fir_filter_xxx_0, '0', blocks_add_xx_0, '2']
-- [freq_xlating_fir_filter_xxx_0_0, '0', blocks_add_xx_0, '3']
+- [freq_xlating_fir_filter_xxx_0, '0', blocks_multiply_xx_0_2_0, '1']
 - [freq_xlating_fir_filter_xxx_0_1, '0', blocks_multiply_xx_0, '1']
+- [low_pass_filter_0, '0', blocks_complex_to_mag_0, '0']
+- [rational_resampler_xxx_0, '0', audio_sink_0, '0']
 
 metadata:
   file_format: 1
-  grc_version: 3.10.7.0
+  grc_version: 3.10.9.2
