@@ -7,11 +7,11 @@
 # GNU Radio Python Flow Graph
 # Title: Meteor Scatter Simulation
 # Author: amp
-# GNU Radio version: 3.10.9.2
+# GNU Radio version: 3.10.7.0
 
+from packaging.version import Version as StrictVersion
 from PyQt5 import Qt
 from gnuradio import qtgui
-from PyQt5 import QtCore
 from gnuradio import analog
 from gnuradio import audio
 from gnuradio import blocks
@@ -25,6 +25,8 @@ from PyQt5 import Qt
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
+from gnuradio.qtgui import Range, RangeWidget
+from PyQt5 import QtCore
 import gr_meteor_epy_block_0 as epy_block_0  # embedded python block
 import numpy as np
 import sip
@@ -57,19 +59,19 @@ class gr_meteor(gr.top_block, Qt.QWidget):
         self.settings = Qt.QSettings("GNU Radio", "gr_meteor")
 
         try:
-            geometry = self.settings.value("geometry")
-            if geometry:
-                self.restoreGeometry(geometry)
+            if StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
+                self.restoreGeometry(self.settings.value("geometry").toByteArray())
+            else:
+                self.restoreGeometry(self.settings.value("geometry"))
         except BaseException as exc:
             print(f"Qt GUI: Could not restore geometry: {str(exc)}", file=sys.stderr)
 
         ##################################################
         # Variables
         ##################################################
-        self.samp_rate = samp_rate = 1.2e3
+        self.samp_rate = samp_rate = 1e3
         self.noiseLevel = noiseLevel = 0
         self.fade_rate = fade_rate = 0.5
-        self.dShift = dShift = 0
         self.burst_duration = burst_duration = 3.0
         self.beacon_freq = beacon_freq = 49.97e6
 
@@ -77,17 +79,17 @@ class gr_meteor(gr.top_block, Qt.QWidget):
         # Blocks
         ##################################################
 
-        self._noiseLevel_range = qtgui.Range(0, 1, 0.05, 0, 200)
-        self._noiseLevel_win = qtgui.RangeWidget(self._noiseLevel_range, self.set_noiseLevel, "Noise Level", "slider", float, QtCore.Qt.Horizontal)
+        self._noiseLevel_range = Range(0, 1, 0.05, 0, 200)
+        self._noiseLevel_win = RangeWidget(self._noiseLevel_range, self.set_noiseLevel, "Noise Level", "slider", float, QtCore.Qt.Horizontal)
         self.top_grid_layout.addWidget(self._noiseLevel_win, 0, 2, 1, 6)
         for r in range(0, 1):
             self.top_grid_layout.setRowStretch(r, 1)
         for c in range(2, 8):
             self.top_grid_layout.setColumnStretch(c, 1)
         self.rational_resampler_xxx_0 = filter.rational_resampler_fff(
-                interpolation=40,
-                decimation=3,
-                taps=firdes.low_pass(1.0,48000,500,200,window.WIN_HAMMING),
+                interpolation=16,
+                decimation=1,
+                taps=firdes.low_pass(1.0,16000,500,200,window.WIN_HAMMING),
                 fractional_bw=0)
         self.qtgui_sink_x_0 = qtgui.sink_c(
             2048, #fftsize
@@ -163,6 +165,9 @@ class gr_meteor(gr.top_block, Qt.QWidget):
         self.blocks_vector_source_x_0 = blocks.vector_source_c(([0.0]*100000 + [np.exp(-x/4000.0) for x in range(10000)] + [0.0]*100000), True, 1, [])
         self.blocks_throttle2_0 = blocks.throttle( gr.sizeof_gr_complex*1, samp_rate, True, 0 if "auto" == "auto" else max( int(float(0.1) * samp_rate) if "auto" == "time" else int(0.1), 1) )
         self.blocks_multiply_xx_0 = blocks.multiply_vcc(1)
+        self.blocks_multiply_const_xx_0 = blocks.multiply_const_cc(0.75, 1)
+        self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_gr_complex*1, '/home/amp/sw/meteor_output.bin', False)
+        self.blocks_file_sink_0.set_unbuffered(False)
         self.blocks_complex_to_mag_0 = blocks.complex_to_mag(1)
         self.blocks_add_xx_0 = blocks.add_vcc(1)
         self.audio_sink_0 = audio.sink(16000, '', True)
@@ -180,10 +185,12 @@ class gr_meteor(gr.top_block, Qt.QWidget):
         self.connect((self.analog_sig_source_x_0, 0), (self.blocks_multiply_xx_0, 0))
         self.connect((self.blocks_add_xx_0, 0), (self.blocks_throttle2_0, 0))
         self.connect((self.blocks_complex_to_mag_0, 0), (self.rational_resampler_xxx_0, 0))
+        self.connect((self.blocks_multiply_const_xx_0, 0), (self.freq_xlating_fir_filter_xxx_0_1, 0))
         self.connect((self.blocks_multiply_xx_0, 0), (self.blocks_add_xx_0, 2))
+        self.connect((self.blocks_throttle2_0, 0), (self.blocks_file_sink_0, 0))
         self.connect((self.blocks_throttle2_0, 0), (self.low_pass_filter_0, 0))
         self.connect((self.blocks_throttle2_0, 0), (self.qtgui_sink_x_0, 0))
-        self.connect((self.blocks_vector_source_x_0, 0), (self.freq_xlating_fir_filter_xxx_0_1, 0))
+        self.connect((self.blocks_vector_source_x_0, 0), (self.blocks_multiply_const_xx_0, 0))
         self.connect((self.epy_block_0, 0), (self.qtgui_number_sink_0, 0))
         self.connect((self.freq_xlating_fir_filter_xxx_0_1, 0), (self.blocks_multiply_xx_0, 1))
         self.connect((self.low_pass_filter_0, 0), (self.blocks_complex_to_mag_0, 0))
@@ -222,12 +229,6 @@ class gr_meteor(gr.top_block, Qt.QWidget):
     def set_fade_rate(self, fade_rate):
         self.fade_rate = fade_rate
 
-    def get_dShift(self):
-        return self.dShift
-
-    def set_dShift(self, dShift):
-        self.dShift = dShift
-
     def get_burst_duration(self):
         return self.burst_duration
 
@@ -247,6 +248,9 @@ class gr_meteor(gr.top_block, Qt.QWidget):
 
 def main(top_block_cls=gr_meteor, options=None):
 
+    if StrictVersion("4.5.0") <= StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
+        style = gr.prefs().get_string('qtgui', 'style', 'raster')
+        Qt.QApplication.setGraphicsSystem(style)
     qapp = Qt.QApplication(sys.argv)
 
     tb = top_block_cls()
