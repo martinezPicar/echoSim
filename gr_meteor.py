@@ -7,17 +7,15 @@
 # GNU Radio Python Flow Graph
 # Title: Meteor Scatter Simulation
 # Author: amp
-# GNU Radio version: 3.10.7.0
+# GNU Radio version: 3.10.9.2
 
-from packaging.version import Version as StrictVersion
 from PyQt5 import Qt
 from gnuradio import qtgui
+from PyQt5 import QtCore
 from gnuradio import analog
-from gnuradio import audio
 from gnuradio import blocks
-from gnuradio import filter
-from gnuradio.filter import firdes
 from gnuradio import gr
+from gnuradio.filter import firdes
 from gnuradio.fft import window
 import sys
 import signal
@@ -25,8 +23,6 @@ from PyQt5 import Qt
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
-from gnuradio.qtgui import Range, RangeWidget
-from PyQt5 import QtCore
 import gr_meteor_epy_block_0 as epy_block_0  # embedded python block
 import numpy as np
 import sip
@@ -59,43 +55,35 @@ class gr_meteor(gr.top_block, Qt.QWidget):
         self.settings = Qt.QSettings("GNU Radio", "gr_meteor")
 
         try:
-            if StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
-                self.restoreGeometry(self.settings.value("geometry").toByteArray())
-            else:
-                self.restoreGeometry(self.settings.value("geometry"))
+            geometry = self.settings.value("geometry")
+            if geometry:
+                self.restoreGeometry(geometry)
         except BaseException as exc:
             print(f"Qt GUI: Could not restore geometry: {str(exc)}", file=sys.stderr)
 
         ##################################################
         # Variables
         ##################################################
-        self.samp_rate = samp_rate = 1e3
+        self.samp_rate = samp_rate = 1000
         self.noiseLevel = noiseLevel = 0
-        self.fade_rate = fade_rate = 0.5
-        self.burst_duration = burst_duration = 3.0
         self.beacon_freq = beacon_freq = 49.97e6
 
         ##################################################
         # Blocks
         ##################################################
 
-        self._noiseLevel_range = Range(0, 1, 0.05, 0, 200)
-        self._noiseLevel_win = RangeWidget(self._noiseLevel_range, self.set_noiseLevel, "Noise Level", "slider", float, QtCore.Qt.Horizontal)
-        self.top_grid_layout.addWidget(self._noiseLevel_win, 0, 2, 1, 6)
+        self._noiseLevel_range = qtgui.Range(0, 1, 0.05, 0, 200)
+        self._noiseLevel_win = qtgui.RangeWidget(self._noiseLevel_range, self.set_noiseLevel, "Noise Level", "slider", float, QtCore.Qt.Horizontal)
+        self.top_grid_layout.addWidget(self._noiseLevel_win, 0, 0, 1, 4)
         for r in range(0, 1):
             self.top_grid_layout.setRowStretch(r, 1)
-        for c in range(2, 8):
+        for c in range(0, 4):
             self.top_grid_layout.setColumnStretch(c, 1)
-        self.rational_resampler_xxx_0 = filter.rational_resampler_fff(
-                interpolation=16,
-                decimation=1,
-                taps=firdes.low_pass(1.0,16000,500,200,window.WIN_HAMMING),
-                fractional_bw=0)
         self.qtgui_sink_x_0 = qtgui.sink_c(
             2048, #fftsize
             window.WIN_BLACKMAN_hARRIS, #wintype
             beacon_freq, #fc
-            samp_rate, #bw
+            200, #bw
             "", #name
             False, #plotfreq
             True, #plotwaterfall
@@ -103,7 +91,7 @@ class gr_meteor(gr.top_block, Qt.QWidget):
             False, #plotconst
             None # parent
         )
-        self.qtgui_sink_x_0.set_update_time(1.0/.666)
+        self.qtgui_sink_x_0.set_update_time(1.0/1)
         self._qtgui_sink_x_0_win = sip.wrapinstance(self.qtgui_sink_x_0.qwidget(), Qt.QWidget)
 
         self.qtgui_sink_x_0.enable_rf_freq(True)
@@ -113,64 +101,14 @@ class gr_meteor(gr.top_block, Qt.QWidget):
             self.top_grid_layout.setRowStretch(r, 1)
         for c in range(0, 4):
             self.top_grid_layout.setColumnStretch(c, 1)
-        self.qtgui_number_sink_0 = qtgui.number_sink(
-            gr.sizeof_float,
-            1,
-            qtgui.NUM_GRAPH_HORIZ,
-            1,
-            None # parent
-        )
-        self.qtgui_number_sink_0.set_update_time(0.10)
-        self.qtgui_number_sink_0.set_title('Random Generator')
-
-        labels = ['Doppler:', '', '', '', '',
-            '', '', '', '', '']
-        units = ['Hz', '', '', '', '',
-            '', '', '', '', '']
-        colors = [("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"),
-            ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black")]
-        factor = [1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1]
-
-        for i in range(1):
-            self.qtgui_number_sink_0.set_min(i, -15)
-            self.qtgui_number_sink_0.set_max(i, 15)
-            self.qtgui_number_sink_0.set_color(i, colors[i][0], colors[i][1])
-            if len(labels[i]) == 0:
-                self.qtgui_number_sink_0.set_label(i, "Data {0}".format(i))
-            else:
-                self.qtgui_number_sink_0.set_label(i, labels[i])
-            self.qtgui_number_sink_0.set_unit(i, units[i])
-            self.qtgui_number_sink_0.set_factor(i, factor[i])
-
-        self.qtgui_number_sink_0.enable_autoscale(False)
-        self._qtgui_number_sink_0_win = sip.wrapinstance(self.qtgui_number_sink_0.qwidget(), Qt.QWidget)
-        self.top_grid_layout.addWidget(self._qtgui_number_sink_0_win, 0, 0, 1, 2)
-        for r in range(0, 1):
-            self.top_grid_layout.setRowStretch(r, 1)
-        for c in range(0, 2):
-            self.top_grid_layout.setColumnStretch(c, 1)
-        self.low_pass_filter_0 = filter.fir_filter_ccf(
-            1,
-            firdes.low_pass(
-                1,
-                samp_rate,
-                500,
-                200,
-                window.WIN_HAMMING,
-                6.76))
-        self.freq_xlating_fir_filter_xxx_0_1 = filter.freq_xlating_fir_filter_ccc(1, firdes.complex_band_pass(1, samp_rate, -samp_rate/(2), samp_rate/(2), 10), 0, samp_rate)
-        self.freq_xlating_fir_filter_xxx_0_1.set_block_alias("doppler_shift")
         self.epy_block_0 = epy_block_0.blk()
         self.blocks_vector_source_x_0 = blocks.vector_source_c(([0.0]*100000 + [np.exp(-x/4000.0) for x in range(10000)] + [0.0]*100000), True, 1, [])
         self.blocks_throttle2_0 = blocks.throttle( gr.sizeof_gr_complex*1, samp_rate, True, 0 if "auto" == "auto" else max( int(float(0.1) * samp_rate) if "auto" == "time" else int(0.1), 1) )
+        self.blocks_null_sink_1 = blocks.null_sink(gr.sizeof_float*1)
         self.blocks_multiply_xx_0 = blocks.multiply_vcc(1)
-        self.blocks_multiply_const_xx_0 = blocks.multiply_const_cc(0.75, 1)
-        self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_gr_complex*1, '/home/amp/sw/meteor_output.bin', False)
+        self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_gr_complex*1, '/home/suntech/data/meteor_output.bin', False)
         self.blocks_file_sink_0.set_unbuffered(False)
-        self.blocks_complex_to_mag_0 = blocks.complex_to_mag(1)
         self.blocks_add_xx_0 = blocks.add_vcc(1)
-        self.audio_sink_0 = audio.sink(16000, '', True)
         self.analog_sig_source_x_0 = analog.sig_source_c(samp_rate, analog.GR_SIN_WAVE, beacon_freq, 1, 0, 0)
         self.analog_sig_source_x_0.set_block_alias("Beacon")
         self.analog_noise_source_x_0 = analog.noise_source_c(analog.GR_GAUSSIAN, (noiseLevel/10), 0)
@@ -179,22 +117,15 @@ class gr_meteor(gr.top_block, Qt.QWidget):
         ##################################################
         # Connections
         ##################################################
-        self.msg_connect((self.epy_block_0, 'freq_out'), (self.freq_xlating_fir_filter_xxx_0_1, 'freq'))
         self.connect((self.analog_noise_source_x_0, 0), (self.blocks_add_xx_0, 0))
         self.connect((self.analog_sig_source_x_0, 0), (self.blocks_add_xx_0, 1))
         self.connect((self.analog_sig_source_x_0, 0), (self.blocks_multiply_xx_0, 0))
         self.connect((self.blocks_add_xx_0, 0), (self.blocks_throttle2_0, 0))
-        self.connect((self.blocks_complex_to_mag_0, 0), (self.rational_resampler_xxx_0, 0))
-        self.connect((self.blocks_multiply_const_xx_0, 0), (self.freq_xlating_fir_filter_xxx_0_1, 0))
         self.connect((self.blocks_multiply_xx_0, 0), (self.blocks_add_xx_0, 2))
         self.connect((self.blocks_throttle2_0, 0), (self.blocks_file_sink_0, 0))
-        self.connect((self.blocks_throttle2_0, 0), (self.low_pass_filter_0, 0))
         self.connect((self.blocks_throttle2_0, 0), (self.qtgui_sink_x_0, 0))
-        self.connect((self.blocks_vector_source_x_0, 0), (self.blocks_multiply_const_xx_0, 0))
-        self.connect((self.epy_block_0, 0), (self.qtgui_number_sink_0, 0))
-        self.connect((self.freq_xlating_fir_filter_xxx_0_1, 0), (self.blocks_multiply_xx_0, 1))
-        self.connect((self.low_pass_filter_0, 0), (self.blocks_complex_to_mag_0, 0))
-        self.connect((self.rational_resampler_xxx_0, 0), (self.audio_sink_0, 0))
+        self.connect((self.blocks_vector_source_x_0, 0), (self.blocks_multiply_xx_0, 1))
+        self.connect((self.epy_block_0, 0), (self.blocks_null_sink_1, 0))
 
 
     def closeEvent(self, event):
@@ -212,9 +143,6 @@ class gr_meteor(gr.top_block, Qt.QWidget):
         self.samp_rate = samp_rate
         self.analog_sig_source_x_0.set_sampling_freq(self.samp_rate)
         self.blocks_throttle2_0.set_sample_rate(self.samp_rate)
-        self.freq_xlating_fir_filter_xxx_0_1.set_taps(firdes.complex_band_pass(1, self.samp_rate, -self.samp_rate/(2), self.samp_rate/(2), 10))
-        self.low_pass_filter_0.set_taps(firdes.low_pass(1, self.samp_rate, 500, 200, window.WIN_HAMMING, 6.76))
-        self.qtgui_sink_x_0.set_frequency_range(self.beacon_freq, self.samp_rate)
 
     def get_noiseLevel(self):
         return self.noiseLevel
@@ -223,34 +151,19 @@ class gr_meteor(gr.top_block, Qt.QWidget):
         self.noiseLevel = noiseLevel
         self.analog_noise_source_x_0.set_amplitude((self.noiseLevel/10))
 
-    def get_fade_rate(self):
-        return self.fade_rate
-
-    def set_fade_rate(self, fade_rate):
-        self.fade_rate = fade_rate
-
-    def get_burst_duration(self):
-        return self.burst_duration
-
-    def set_burst_duration(self, burst_duration):
-        self.burst_duration = burst_duration
-
     def get_beacon_freq(self):
         return self.beacon_freq
 
     def set_beacon_freq(self, beacon_freq):
         self.beacon_freq = beacon_freq
         self.analog_sig_source_x_0.set_frequency(self.beacon_freq)
-        self.qtgui_sink_x_0.set_frequency_range(self.beacon_freq, self.samp_rate)
+        self.qtgui_sink_x_0.set_frequency_range(self.beacon_freq, 200)
 
 
 
 
 def main(top_block_cls=gr_meteor, options=None):
 
-    if StrictVersion("4.5.0") <= StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
-        style = gr.prefs().get_string('qtgui', 'style', 'raster')
-        Qt.QApplication.setGraphicsSystem(style)
     qapp = Qt.QApplication(sys.argv)
 
     tb = top_block_cls()
