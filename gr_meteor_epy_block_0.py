@@ -21,7 +21,7 @@ class blk(gr.sync_block):
         out = output_items[0]
 
         for i in range(len(out)):
-            if self.counter % 100 == 0:
+            if self.counter % 1000 == 0:
                 self.current_val = random.uniform(-15, 15)
 
                 # Build PMT pair: (variable name, value)

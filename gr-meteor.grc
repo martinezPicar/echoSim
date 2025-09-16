@@ -93,7 +93,7 @@ blocks:
     start: '0'
     step: '0.05'
     stop: '1'
-    value: '0'
+    value: '0.10'
     widget: slider
   states:
     bus_sink: false
@@ -252,7 +252,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1208, 400.0]
+    coordinate: [1000, 456.0]
     rotation: 0
     state: disabled
 - name: blocks_file_sink_0
@@ -262,7 +262,7 @@ blocks:
     alias: ''
     append: 'False'
     comment: ''
-    file: /home/suntech/data/meteor_output.bin
+    file: ../meteor_output.bin
     type: complex
     unbuffered: 'False'
     vlen: '1'
@@ -272,7 +272,25 @@ blocks:
     bus_structure: null
     coordinate: [1128, 208.0]
     rotation: 0
-    state: enabled
+    state: disabled
+- name: blocks_multiply_const_xx_0
+  id: blocks_multiply_const_xx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    const: 1/(50*0.001)
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    type: float
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1080, 524.0]
+    rotation: 0
+    state: disabled
 - name: blocks_multiply_xx_0
   id: blocks_multiply_xx
   parameters:
@@ -297,16 +315,16 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    k: '0'
+    k: '-98'
     maxoutbuf: '0'
     minoutbuf: '0'
-    n: '1'
+    n: '10'
     vlen: '1'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1336, 452.0]
+    coordinate: [1216, 596.0]
     rotation: 0
     state: disabled
 - name: blocks_null_sink_1
@@ -344,7 +362,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [928, 312.0]
+    coordinate: [928, 316.0]
     rotation: 0
     state: enabled
 - name: blocks_vector_source_x_0
@@ -378,11 +396,11 @@ blocks:
       \n        # Message output port for variable updates\n        self.message_port_register_out(pmt.intern(\"\
       freq_out\"))\n\n    def work(self, input_items, output_items):\n        out\
       \ = output_items[0]\n\n        for i in range(len(out)):\n            if self.counter\
-      \ % 100 == 0:\n                self.current_val = random.uniform(-15, 15)\n\n\
-      \                # Build PMT pair: (variable name, value)\n                msg\
-      \ = pmt.cons(\n                    pmt.intern(\"dShift\"),\n               \
-      \     pmt.from_double(self.current_val)\n                )\n\n             \
-      \   # Publish the message\n                self.message_port_pub(pmt.intern(\"\
+      \ % 1000 == 0:\n                self.current_val = random.uniform(-15, 15)\n\
+      \n                # Build PMT pair: (variable name, value)\n               \
+      \ msg = pmt.cons(\n                    pmt.intern(\"dShift\"),\n           \
+      \         pmt.from_double(self.current_val)\n                )\n\n         \
+      \       # Publish the message\n                self.message_port_pub(pmt.intern(\"\
       freq_out\"), msg)\n\n                # Print to terminal\n                #\
       \ print(f\"[Random dShift Publisher] dShift = {self.current_val:.3f}\")\n\n\
       \            out[i] = self.current_val\n            self.counter += 1\n\n  \
@@ -420,7 +438,7 @@ blocks:
     bus_structure: null
     coordinate: [328, 368.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: freq_xlating_fir_filter_xxx_0_1_0
   id: freq_xlating_fir_filter_xxx
   parameters:
@@ -460,7 +478,7 @@ blocks:
     affinity: ''
     alias: ''
     autoscale: 'False'
-    avg: '1'
+    avg: '0'
     color1: ("black", "black")
     color10: ("black", "black")
     color2: ("black", "black")
@@ -483,8 +501,8 @@ blocks:
     factor8: '1'
     factor9: '1'
     graph_type: qtgui.NUM_GRAPH_HORIZ
-    gui_hint: 0,0,1,2
-    label1: 'Doppler:'
+    gui_hint: ''
+    label1: Power
     label10: ''
     label2: ''
     label3: ''
@@ -494,12 +512,12 @@ blocks:
     label7: ''
     label8: ''
     label9: ''
-    max: '15'
-    min: '-15'
-    name: Random Generator
+    max: '-60'
+    min: '-100'
+    name: Output
     nconnections: '1'
     type: float
-    unit1: Hz
+    unit1: dBm
     unit10: ''
     unit2: ''
     unit3: ''
@@ -509,12 +527,12 @@ blocks:
     unit7: ''
     unit8: ''
     unit9: ''
-    update_time: '0.10'
+    update_time: '0.666'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [280, 192.0]
+    coordinate: [1328, 564.0]
     rotation: 0
     state: disabled
 - name: qtgui_sink_x_0
@@ -523,7 +541,7 @@ blocks:
     affinity: ''
     alias: ''
     bw: '200'
-    comment: ''
+    comment: Spectrogram
     fc: beacon_freq
     fftsize: '2048'
     gui_hint: (1,0,5,4)
@@ -534,7 +552,7 @@ blocks:
     plotfreq: 'False'
     plottime: 'False'
     plotwaterfall: 'True'
-    rate: '1'
+    rate: '0.666'
     showports: 'False'
     showrf: 'True'
     type: complex
@@ -546,120 +564,22 @@ blocks:
     coordinate: [1128, 320.0]
     rotation: 0
     state: enabled
-- name: qtgui_time_sink_x_0
-  id: qtgui_time_sink_x
-  parameters:
-    affinity: ''
-    alias: ''
-    alpha1: '1.0'
-    alpha10: '1.0'
-    alpha2: '1.0'
-    alpha3: '1.0'
-    alpha4: '1.0'
-    alpha5: '1.0'
-    alpha6: '1.0'
-    alpha7: '1.0'
-    alpha8: '1.0'
-    alpha9: '1.0'
-    autoscale: 'False'
-    axislabels: 'True'
-    color1: blue
-    color10: dark blue
-    color2: red
-    color3: green
-    color4: black
-    color5: cyan
-    color6: magenta
-    color7: yellow
-    color8: dark red
-    color9: dark green
-    comment: ''
-    ctrlpanel: 'True'
-    entags: 'True'
-    grid: 'False'
-    gui_hint: 1,4,5,4
-    label1: Signal 1
-    label10: Signal 10
-    label2: Signal 2
-    label3: Signal 3
-    label4: Signal 4
-    label5: Signal 5
-    label6: Signal 6
-    label7: Signal 7
-    label8: Signal 8
-    label9: Signal 9
-    legend: 'True'
-    marker1: '-1'
-    marker10: '-1'
-    marker2: '-1'
-    marker3: '-1'
-    marker4: '-1'
-    marker5: '-1'
-    marker6: '-1'
-    marker7: '-1'
-    marker8: '-1'
-    marker9: '-1'
-    name: '""'
-    nconnections: '1'
-    size: '1024'
-    srate: samp_rate
-    stemplot: 'False'
-    style1: '1'
-    style10: '1'
-    style2: '1'
-    style3: '1'
-    style4: '1'
-    style5: '1'
-    style6: '1'
-    style7: '1'
-    style8: '1'
-    style9: '1'
-    tr_chan: '0'
-    tr_delay: '0'
-    tr_level: '0.0'
-    tr_mode: qtgui.TRIG_MODE_FREE
-    tr_slope: qtgui.TRIG_SLOPE_POS
-    tr_tag: '""'
-    type: float
-    update_time: '0.10'
-    width1: '1'
-    width10: '1'
-    width2: '1'
-    width3: '1'
-    width4: '1'
-    width5: '1'
-    width6: '1'
-    width7: '1'
-    width8: '1'
-    width9: '1'
-    ylabel: Amplitude
-    ymax: '3'
-    ymin: '-3'
-    yunit: '""'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1352, 592.0]
-    rotation: 0
-    state: disabled
 
 connections:
 - [analog_noise_source_x_0, '0', blocks_add_xx_0, '0']
 - [analog_sig_source_x_0, '0', blocks_add_xx_0, '1']
 - [analog_sig_source_x_0, '0', blocks_multiply_xx_0, '0']
-- [blocks_add_xx_0, '0', blocks_complex_to_mag_squared_0, '0']
 - [blocks_add_xx_0, '0', blocks_throttle2_0, '0']
-- [blocks_complex_to_mag_squared_0, '0', blocks_nlog10_ff_0, '0']
+- [blocks_complex_to_mag_squared_0, '0', blocks_multiply_const_xx_0, '0']
+- [blocks_multiply_const_xx_0, '0', blocks_nlog10_ff_0, '0']
 - [blocks_multiply_xx_0, '0', blocks_add_xx_0, '2']
 - [blocks_multiply_xx_0, '0', freq_xlating_fir_filter_xxx_0_1_0, '0']
-- [blocks_nlog10_ff_0, '0', qtgui_time_sink_x_0, '0']
+- [blocks_nlog10_ff_0, '0', qtgui_number_sink_0, '0']
+- [blocks_throttle2_0, '0', blocks_complex_to_mag_squared_0, '0']
 - [blocks_throttle2_0, '0', blocks_file_sink_0, '0']
 - [blocks_throttle2_0, '0', qtgui_sink_x_0, '0']
-- [blocks_vector_source_x_0, '0', blocks_multiply_xx_0, '1']
 - [blocks_vector_source_x_0, '0', freq_xlating_fir_filter_xxx_0_1, '0']
 - [epy_block_0, '0', blocks_null_sink_1, '0']
-- [epy_block_0, '0', qtgui_number_sink_0, '0']
 - [epy_block_0, freq_out, freq_xlating_fir_filter_xxx_0_1, freq]
 - [epy_block_0, freq_out, freq_xlating_fir_filter_xxx_0_1_0, freq]
 - [freq_xlating_fir_filter_xxx_0_1, '0', blocks_multiply_xx_0, '1']
@@ -667,4 +587,4 @@ connections:
 
 metadata:
   file_format: 1
-  grc_version: 3.10.9.2
+  grc_version: 3.10.7.0
