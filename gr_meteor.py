@@ -69,6 +69,7 @@ class gr_meteor(gr.top_block, Qt.QWidget):
         self.samp_rate = samp_rate = 6048
         self.ud_samples = ud_samples = samp_rate*ud_dur
         self.samp_rate_label = samp_rate_label = samp_rate
+        self.riseFracc = riseFracc = 0.1
         self.noiseLevel = noiseLevel = 0.10
         self.beacon_freq = beacon_freq = 49970000
 
@@ -125,7 +126,7 @@ class gr_meteor(gr.top_block, Qt.QWidget):
         self.freq_xlating_fir_filter_xxx_0_1 = filter.freq_xlating_fir_filter_ccc(1, firdes.complex_band_pass(1, samp_rate, -samp_rate/(2), samp_rate/(2), 10), 0, samp_rate)
         self.freq_xlating_fir_filter_xxx_0_1.set_block_alias("doppler_shift")
         self.epy_block_0 = epy_block_0.blk()
-        self.blocks_vector_source_x_0_0 = blocks.vector_source_c(([np.exp(x/(0.1*ud_samples)) for x in range(-int(0.1*ud_samples), 0)]+[np.exp(-x/(0.9*ud_samples)) for x in range(0, int(0.9*ud_samples))]), True, 1, [])
+        self.blocks_vector_source_x_0_0 = blocks.vector_source_c(([np.exp(x/(riseFracc*ud_samples)) for x in range(-int(riseFracc*ud_samples), 0)]+[np.exp(-x/((1-riseFracc)*ud_samples)) for x in range(0, int((1-riseFracc)*ud_samples))]), True, 1, [])
         self.blocks_throttle2_0 = blocks.throttle( gr.sizeof_gr_complex*1, samp_rate, True, 0 if "auto" == "auto" else max( int(float(0.1) * samp_rate) if "auto" == "time" else int(0.1), 1) )
         self.blocks_null_sink_1 = blocks.null_sink(gr.sizeof_float*1)
         self.blocks_multiply_xx_0 = blocks.multiply_vcc(1)
@@ -182,7 +183,7 @@ class gr_meteor(gr.top_block, Qt.QWidget):
 
     def set_ud_samples(self, ud_samples):
         self.ud_samples = ud_samples
-        self.blocks_vector_source_x_0_0.set_data(([np.exp(x/(0.1*self.ud_samples)) for x in range(-int(0.1*self.ud_samples), 0)]+[np.exp(-x/(0.9*self.ud_samples)) for x in range(0, int(0.9*self.ud_samples))]), [])
+        self.blocks_vector_source_x_0_0.set_data(([np.exp(x/(self.riseFracc*self.ud_samples)) for x in range(-int(self.riseFracc*self.ud_samples), 0)]+[np.exp(-x/((1-self.riseFracc)*self.ud_samples)) for x in range(0, int((1-self.riseFracc)*self.ud_samples))]), [])
 
     def get_samp_rate_label(self):
         return self.samp_rate_label
@@ -190,6 +191,13 @@ class gr_meteor(gr.top_block, Qt.QWidget):
     def set_samp_rate_label(self, samp_rate_label):
         self.samp_rate_label = samp_rate_label
         Qt.QMetaObject.invokeMethod(self._samp_rate_label_label, "setText", Qt.Q_ARG("QString", str(self._samp_rate_label_formatter(self.samp_rate_label))))
+
+    def get_riseFracc(self):
+        return self.riseFracc
+
+    def set_riseFracc(self, riseFracc):
+        self.riseFracc = riseFracc
+        self.blocks_vector_source_x_0_0.set_data(([np.exp(x/(self.riseFracc*self.ud_samples)) for x in range(-int(self.riseFracc*self.ud_samples), 0)]+[np.exp(-x/((1-self.riseFracc)*self.ud_samples)) for x in range(0, int((1-self.riseFracc)*self.ud_samples))]), [])
 
     def get_noiseLevel(self):
         return self.noiseLevel

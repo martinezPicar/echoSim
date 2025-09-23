@@ -70,6 +70,18 @@ blocks:
     coordinate: [424, 16.0]
     rotation: 0
     state: true
+- name: riseFracc
+  id: variable
+  parameters:
+    comment: ''
+    value: '0.1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [800, 16.0]
+    rotation: 0
+    state: enabled
 - name: samp_rate
   id: variable
   parameters:
@@ -273,8 +285,8 @@ blocks:
     repeat: 'True'
     tags: '[]'
     type: complex
-    vector: ([np.exp(x/(0.1*ud_samples)) for x in range(-int(0.1*ud_samples), 0)]+[np.exp(-x/(0.9*ud_samples))
-      for x in range(0, int(0.9*ud_samples))])
+    vector: ([np.exp(x/(riseFracc*ud_samples)) for x in range(-int(riseFracc*ud_samples),
+      0)]+[np.exp(-x/((1-riseFracc)*ud_samples)) for x in range(0, int((1-riseFracc)*ud_samples))])
     vlen: '1'
   states:
     bus_sink: false
