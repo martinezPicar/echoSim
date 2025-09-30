@@ -73,6 +73,7 @@ class gr_meteor(gr.top_block, Qt.QWidget):
         self.riseFracc = riseFracc = 0.1
         self.noiseLevel = noiseLevel = 0.10
         self.beacon_freq = beacon_freq = 49970000
+        self.beacon_direct_att = beacon_direct_att = 1
         self.beacon_att = beacon_att = 1
 
         ##################################################
@@ -102,8 +103,11 @@ class gr_meteor(gr.top_block, Qt.QWidget):
         self._beacon_freq_line_edit.editingFinished.connect(
             lambda: self.set_beacon_freq(eng_notation.str_to_num(str(self._beacon_freq_line_edit.text()))))
         self.top_layout.addWidget(self._beacon_freq_tool_bar)
+        self._beacon_direct_att_range = qtgui.Range(0, 1, 0.05, 1, 200)
+        self._beacon_direct_att_win = qtgui.RangeWidget(self._beacon_direct_att_range, self.set_beacon_direct_att, "Direct Beacon 'Gain'", "counter_slider", float, QtCore.Qt.Horizontal)
+        self.top_layout.addWidget(self._beacon_direct_att_win)
         self._beacon_att_range = qtgui.Range(0, 1, 0.05, 1, 200)
-        self._beacon_att_win = qtgui.RangeWidget(self._beacon_att_range, self.set_beacon_att, "Direct Beacon 'Gain'", "counter_slider", float, QtCore.Qt.Horizontal)
+        self._beacon_att_win = qtgui.RangeWidget(self._beacon_att_range, self.set_beacon_att, "Beacon-Meteor 'Gain'", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._beacon_att_win)
         self._ud_dur_range = qtgui.Range(0, 1, 0.1, 0.5, 200)
         self._ud_dur_win = qtgui.RangeWidget(self._ud_dur_range, self.set_ud_dur, "Underdense Total Duration", "counter_slider", float, QtCore.Qt.Horizontal)
@@ -203,7 +207,8 @@ class gr_meteor(gr.top_block, Qt.QWidget):
         self.blocks_throttle2_0 = blocks.throttle( gr.sizeof_gr_complex*1, samp_rate, True, 0 if "auto" == "auto" else max( int(float(0.1) * samp_rate) if "auto" == "time" else int(0.1), 1) )
         self.blocks_null_sink_1 = blocks.null_sink(gr.sizeof_float*1)
         self.blocks_multiply_xx_0 = blocks.multiply_vcc(1)
-        self.blocks_multiply_const_vxx_0 = blocks.multiply_const_cc(beacon_att)
+        self.blocks_multiply_const_vxx_0_0 = blocks.multiply_const_cc(beacon_att)
+        self.blocks_multiply_const_vxx_0 = blocks.multiply_const_cc(beacon_direct_att)
         self.blocks_add_xx_0 = blocks.add_vcc(1)
         self.analog_sig_source_x_0 = analog.sig_source_c(samp_rate, analog.GR_SIN_WAVE, beacon_freq, 1, 0, 0)
         self.analog_sig_source_x_0.set_block_alias("Beacon")
@@ -216,9 +221,10 @@ class gr_meteor(gr.top_block, Qt.QWidget):
         self.msg_connect((self.epy_block_0, 'freq_out'), (self.freq_xlating_fir_filter_xxx_0_1, 'freq'))
         self.connect((self.analog_noise_source_x_0, 0), (self.blocks_add_xx_0, 2))
         self.connect((self.analog_sig_source_x_0, 0), (self.blocks_multiply_const_vxx_0, 0))
-        self.connect((self.analog_sig_source_x_0, 0), (self.blocks_multiply_xx_0, 0))
+        self.connect((self.analog_sig_source_x_0, 0), (self.blocks_multiply_const_vxx_0_0, 0))
         self.connect((self.blocks_add_xx_0, 0), (self.blocks_throttle2_0, 0))
         self.connect((self.blocks_multiply_const_vxx_0, 0), (self.blocks_add_xx_0, 0))
+        self.connect((self.blocks_multiply_const_vxx_0_0, 0), (self.blocks_multiply_xx_0, 0))
         self.connect((self.blocks_multiply_xx_0, 0), (self.freq_xlating_fir_filter_xxx_0_1, 0))
         self.connect((self.blocks_throttle2_0, 0), (self.qtgui_sink_x_0, 0))
         self.connect((self.blocks_throttle2_0, 0), (self.qtgui_time_sink_x_0, 0))
@@ -300,12 +306,19 @@ class gr_meteor(gr.top_block, Qt.QWidget):
         self.analog_sig_source_x_0.set_frequency(self.beacon_freq)
         self.qtgui_sink_x_0.set_frequency_range(self.beacon_freq, self.samp_rate)
 
+    def get_beacon_direct_att(self):
+        return self.beacon_direct_att
+
+    def set_beacon_direct_att(self, beacon_direct_att):
+        self.beacon_direct_att = beacon_direct_att
+        self.blocks_multiply_const_vxx_0.set_k(self.beacon_direct_att)
+
     def get_beacon_att(self):
         return self.beacon_att
 
     def set_beacon_att(self, beacon_att):
         self.beacon_att = beacon_att
-        self.blocks_multiply_const_vxx_0.set_k(self.beacon_att)
+        self.blocks_multiply_const_vxx_0_0.set_k(self.beacon_att)
 
 
 
