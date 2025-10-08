@@ -364,7 +364,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [936, 664.0]
+    coordinate: [936, 688.0]
     rotation: 0
     state: disabled
 - name: blocks_multiply_const_vxx_0
@@ -438,7 +438,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1112, 656.0]
+    coordinate: [1112, 680.0]
     rotation: 0
     state: disabled
 - name: blocks_null_sink_1
@@ -474,7 +474,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [568, 624.0]
+    coordinate: [560, 712.0]
     rotation: 0
     state: disabled
 - name: blocks_null_source_0_0
@@ -493,7 +493,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [248, 648.0]
+    coordinate: [200, 712.0]
     rotation: 0
     state: disabled
 - name: blocks_selector_0
@@ -516,7 +516,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [712, 600.0]
+    coordinate: [704, 688.0]
     rotation: 0
     state: disabled
 - name: blocks_selector_0_0
@@ -539,7 +539,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [392, 624.0]
+    coordinate: [344, 688.0]
     rotation: 0
     state: disabled
 - name: blocks_throttle2_0
@@ -580,7 +580,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [16, 656.0]
+    coordinate: [16, 688.0]
     rotation: 0
     state: disabled
 - name: blocks_vector_source_x_0_0
