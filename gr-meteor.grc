@@ -402,7 +402,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [288, 320.0]
+    coordinate: [280, 340.0]
     rotation: 0
     state: enabled
 - name: blocks_multiply_xx_0
@@ -420,7 +420,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [440, 384.0]
+    coordinate: [424, 384.0]
     rotation: 0
     state: enabled
 - name: blocks_nlog10_ff_0
@@ -560,7 +560,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [904, 400.0]
+    coordinate: [904, 404.0]
     rotation: 0
     state: enabled
 - name: blocks_vector_source_x_0
@@ -690,7 +690,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [560, 384.0]
+    coordinate: [552, 388.0]
     rotation: 0
     state: enabled
 - name: import_0
@@ -855,4 +855,4 @@ connections:
 
 metadata:
   file_format: 1
-  grc_version: 3.10.9.2
+  grc_version: 3.10.12.0
