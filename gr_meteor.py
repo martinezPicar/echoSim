@@ -7,7 +7,7 @@
 # GNU Radio Python Flow Graph
 # Title: Meteor Scatter Simulation
 # Author: amp
-# GNU Radio version: 3.10.9.2
+# GNU Radio version: 3.10.12.0
 
 from PyQt5 import Qt
 from gnuradio import qtgui
@@ -27,6 +27,7 @@ from gnuradio.eng_arg import eng_float, intx
 import gr_meteor_epy_block_0 as epy_block_0  # embedded python block
 import numpy as np
 import sip
+import threading
 
 
 
@@ -53,7 +54,7 @@ class gr_meteor(gr.top_block, Qt.QWidget):
         self.top_grid_layout = Qt.QGridLayout()
         self.top_layout.addLayout(self.top_grid_layout)
 
-        self.settings = Qt.QSettings("GNU Radio", "gr_meteor")
+        self.settings = Qt.QSettings("gnuradio/flowgraphs", "gr_meteor")
 
         try:
             geometry = self.settings.value("geometry")
@@ -61,6 +62,7 @@ class gr_meteor(gr.top_block, Qt.QWidget):
                 self.restoreGeometry(geometry)
         except BaseException as exc:
             print(f"Qt GUI: Could not restore geometry: {str(exc)}", file=sys.stderr)
+        self.flowgraph_started = threading.Event()
 
         ##################################################
         # Variables
@@ -234,7 +236,7 @@ class gr_meteor(gr.top_block, Qt.QWidget):
 
 
     def closeEvent(self, event):
-        self.settings = Qt.QSettings("GNU Radio", "gr_meteor")
+        self.settings = Qt.QSettings("gnuradio/flowgraphs", "gr_meteor")
         self.settings.setValue("geometry", self.saveGeometry())
         self.stop()
         self.wait()
@@ -330,6 +332,7 @@ def main(top_block_cls=gr_meteor, options=None):
     tb = top_block_cls()
 
     tb.start()
+    tb.flowgraph_started.set()
 
     tb.show()
 
