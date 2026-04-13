@@ -59,14 +59,14 @@ blocks:
   parameters:
     comment: ''
     gui_hint: ''
-    label: '"Direct Beacon ''Gain''"'
+    label: '"Direct Beacon ''Attenuation''"'
     min_len: '200'
     orient: QtCore.Qt.Horizontal
     rangeType: float
     start: '0'
     step: '0.05'
     stop: '1'
-    value: '1'
+    value: '0.5'
     widget: counter_slider
   states:
     bus_sink: false
@@ -153,7 +153,7 @@ blocks:
   parameters:
     comment: ''
     gui_hint: ''
-    label: Fraction of Rising Power (Profile)
+    label: Fraction of Rising Power (Duration)
     min_len: '200'
     orient: QtCore.Qt.Horizontal
     rangeType: float
@@ -307,7 +307,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [520, 528.0]
+    coordinate: [552, 520.0]
     rotation: 0
     state: enabled
 - name: analog_sig_source_x_0
@@ -380,7 +380,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1000, 512.0]
+    coordinate: [1000, 496.0]
     rotation: 0
     state: enabled
 - name: blocks_multiply_const_vxx_0
@@ -389,7 +389,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: "Beacon Direct \nSignal Attenuation"
-    const: beacon_direct_att
+    const: 1-beacon_direct_att
     maxoutbuf: '0'
     minoutbuf: '0'
     type: complex
@@ -466,13 +466,13 @@ blocks:
     k: '0'
     maxoutbuf: '0'
     minoutbuf: '0'
-    n: '10'
+    n: '1'
     vlen: '1'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1128, 560.0]
+    coordinate: [1128, 552.0]
     rotation: 0
     state: enabled
 - name: blocks_null_sink_1
@@ -489,7 +489,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [304, 480.0]
+    coordinate: [296, 480.0]
     rotation: 0
     state: enabled
 - name: blocks_null_source_0
@@ -594,7 +594,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [920, 400.0]
+    coordinate: [896, 400.0]
     rotation: 0
     state: enabled
 - name: blocks_vector_source_x_0
@@ -768,7 +768,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1232, 304.0]
+    coordinate: [1152, 312.0]
     rotation: 0
     state: enabled
 - name: qtgui_time_sink_x_0
@@ -798,7 +798,7 @@ blocks:
     color7: yellow
     color8: dark red
     color9: dark green
-    comment: ''
+    comment: Time Scope
     ctrlpanel: 'True'
     entags: 'False'
     grid: 'True'
@@ -813,7 +813,7 @@ blocks:
     label7: Signal 7
     label8: Signal 8
     label9: Signal 9
-    legend: 'True'
+    legend: 'False'
     marker1: '-1'
     marker10: '-1'
     marker2: '-1'
@@ -828,7 +828,7 @@ blocks:
     nconnections: '1'
     size: '1024'
     srate: samp_rate
-    stemplot: 'True'
+    stemplot: 'False'
     style1: '1'
     style10: '1'
     style2: '1'
@@ -858,14 +858,14 @@ blocks:
     width8: '1'
     width9: '1'
     ylabel: Amplitude
-    ymax: '2'
+    ymax: '20'
     ymin: '0'
     yunit: '""'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1232, 544.0]
+    coordinate: [1232, 536.0]
     rotation: 0
     state: enabled
 
