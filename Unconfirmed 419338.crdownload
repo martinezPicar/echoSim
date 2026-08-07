@@ -1,0 +1,208 @@
+#!/usr/bin/env python3
+"""
+Meteor Ping Simulator - G3PLX Style
+Creates C and Epsilon shapes with a 1500Hz center frequency
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+import time
+
+# Enable interactive mode
+plt.ion()
+
+# --- Parameters ---
+DOPPLER_BINS = 300
+TIME_HISTORY = 150
+FREQ_CENTER = 1500.0
+FREQ_SPAN = 800.0
+
+class G3PLXMeteorSim:
+    def __init__(self):
+        self.data = np.zeros((TIME_HISTORY, DOPPLER_BINS))
+        self.time_step = 0
+        self.cycle = 0
+        self.shape_mode = 'c'  # 'c' or 'epsilon'
+        
+        # Pre-calculate shapes
+        self.shapes = {
+            'c': self.create_c_shape(),
+            'epsilon': self.create_epsilon_shape()
+        }
+        
+        # Setup plot
+        self.fig, (self.ax1, self.ax2) = plt.subplots(2, 1, figsize=(12, 10), 
+                                                       gridspec_kw={'height_ratios': [3, 1]})
+        
+        # Waterfall
+        self.im = self.ax1.imshow(self.data, aspect='auto', origin='lower',
+                                  extent=[FREQ_CENTER - FREQ_SPAN/2, 
+                                          FREQ_CENTER + FREQ_SPAN/2,
+                                          0, TIME_HISTORY],
+                                  cmap='hot', vmin=0, vmax=1)
+        self.ax1.set_xlabel('Frequency (Hz)')
+        self.ax1.set_ylabel('Time (frames ago)')
+        self.ax1.set_title('G3PLX Meteor Ping Simulator - Waterfall')
+        self.ax1.axvline(x=FREQ_CENTER, color='cyan', linestyle='--', alpha=0.3, label='1500Hz')
+        plt.colorbar(self.im, ax=self.ax1)
+        
+        # Info panel
+        self.ax2.axis('off')
+        self.info_text = self.ax2.text(0.5, 0.5, '', 
+                                       transform=self.ax2.transAxes,
+                                       fontsize=12,
+                                       verticalalignment='center',
+                                       horizontalalignment='center',
+                                       bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.9))
+        
+        self.fig.show()
+        self.fig.canvas.draw()
+        
+        print("=" * 60)
+        print("G3PLX METEOR PING SIMULATOR")
+        print("=" * 60)
+        print("\nSimulating C and Epsilon shaped meteor reflections.")
+        print("Center frequency: 1500 Hz (marked by cyan line)")
+        print("Press Ctrl+C to exit.\n")
+    
+    def create_c_shape(self):
+        """Create a C shape (like in the G3PLX article)."""
+        shape = []
+        width = 90
+        height = 60
+        
+        for i in range(height):
+            t = i / height
+            # C shape with smooth curves
+            if t < 0.2:
+                x = width * (1 - np.cos(t * np.pi * 5)) / 2
+            elif t < 0.8:
+                x = width * 0.85
+            else:
+                x = width * (1 + np.cos((t - 0.8) * np.pi * 5)) / 2
+            
+            # Thicker line for visibility
+            for j in range(-5, 6):
+                shape.append((int(x + j - width/2), i))
+        
+        return shape
+    
+    def create_epsilon_shape(self):
+        """Create an Epsilon shape (like in the G3PLX article)."""
+        shape = []
+        width = 90
+        height = 60
+        
+        for i in range(height):
+            t = i / height
+            # Epsilon shape with 3rd harmonic
+            x = width * (0.3 * np.sin(t * 2 * np.pi) + 
+                        0.5 * np.sin(t * 4 * np.pi) +
+                        0.3 * np.sin(t * 6 * np.pi))
+            
+            # Thicker line
+            for j in range(-5, 6):
+                shape.append((int(x + j), i))
+        
+        return shape
+    
+    def generate_spectrum_line(self):
+        """Generate one line of the spectrum."""
+        # Background noise
+        line = np.random.normal(0.01, 0.005, DOPPLER_BINS)
+        
+        # Current time position
+        time_pos = self.time_step / TIME_HISTORY
+        
+        # Get current shape
+        shape = self.shapes[self.shape_mode]
+        
+        # Draw the shape
+        for freq_offset, time_offset in shape:
+            if abs(time_offset / 60 - time_pos) < 0.04:
+                freq_bin = freq_offset + DOPPLER_BINS // 2
+                if 0 <= freq_bin < DOPPLER_BINS:
+                    # Add gaussian spread
+                    for spread in range(-6, 7):
+                        idx = freq_bin + spread
+                        if 0 <= idx < DOPPLER_BINS:
+                            weight = np.exp(-(spread/6)**2 * 2)
+                            line[idx] = max(line[idx], 0.95 * weight)
+        
+        # Add 1500Hz reference tone (very faint)
+        center = DOPPLER_BINS // 2
+        line[center-1:center+2] = max(line[center-1:center+2].max(), 0.2)
+        
+        # Normalize
+        if line.max() > 0:
+            line = line / line.max()
+        
+        return line
+    
+    def update(self):
+        """Update the display."""
+        # Generate new line
+        new_line = self.generate_spectrum_line()
+        
+        # Update waterfall
+        self.data = np.roll(self.data, -1, axis=0)
+        self.data[-1, :] = new_line
+        
+        # Update display
+        self.im.set_array(self.data)
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
+        
+        # Update time
+        self.time_step += 1
+        if self.time_step >= TIME_HISTORY:
+            self.time_step = 0
+            self.cycle += 1
+            
+            # Switch shape every 3 seconds
+            if self.cycle % 3 == 0:
+                self.shape_mode = 'epsilon' if self.shape_mode == 'c' else 'c'
+                print(f"Shape: {self.shape_mode.upper()}")
+        
+        # Update info
+        shape_names = {'c': 'C Shape (Single Curve)',
+                       'epsilon': 'Epsilon (ε) Shape (Double Curve)'}
+        
+        info = f"""G3PLX METEOR PING SIMULATOR
+
+Current Shape: {shape_names[self.shape_mode]}
+
+Time: {self.time_step}/{TIME_HISTORY}
+Cycle: {self.cycle}
+
+The shape automatically switches
+between C and Epsilon every 3 seconds
+
+Look for curved lines in the waterfall above
+The 1500Hz reference is marked by a cyan line
+
+Close window to exit"""
+        
+        self.info_text.set_text(info)
+    
+    def run(self):
+        """Main loop."""
+        try:
+            frame = 0
+            while plt.fignum_exists(self.fig.number):
+                self.update()
+                time.sleep(0.05)
+                frame += 1
+                if frame % 200 == 0:
+                    print(f"Frame {frame}, Shape: {self.shape_mode}")
+                    
+        except KeyboardInterrupt:
+            print("\n\nStopping simulation...")
+        finally:
+            plt.close(self.fig)
+            print("Simulation ended.")
+
+# --- Main ---
+if __name__ == "__main__":
+    sim = G3PLXMeteorSim()
+    sim.run()
