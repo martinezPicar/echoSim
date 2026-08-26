@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.io.wavfile as wav
+from scipy.optimize import minimize_scalar
 import tkinter as tk
 from tkinter import filedialog
 
@@ -15,10 +16,191 @@ except ImportError:
     HAS_SOUNDDEVICE = False
 
 
-def synthesize_meteor_signal(skew_deg, wind_speed, ratio_fund, ratio_3rd, ratio_5th, alpha_ping, sample_rate=44100, duration=15.0, carrier_freq=1000.0, snr_db=18.0):
+
+# ---------------------------------------------------------------------------
+# BRAMS forward-scatter geometry
+# ---------------------------------------------------------------------------
+# Coordinates are WGS84 geodetic coordinates.  Dourbes is the BRAMS beacon
+# and Humain is used as the default receiver.
+DOURBES_LAT_DEG = 50.0972
+DOURBES_LON_DEG = 4.5847
+DOURBES_ALT_M = 220.0
+
+HUMAIN_LAT_DEG = 50.1639
+HUMAIN_LON_DEG = 5.2181
+HUMAIN_ALT_M = 293.0
+
+C_LIGHT = 299_792_458.0
+WGS84_A = 6378137.0
+WGS84_F = 1.0 / 298.257223563
+WGS84_E2 = WGS84_F * (2.0 - WGS84_F)
+
+
+def geodetic_to_ecef(lat_deg, lon_deg, h_m):
+    """WGS84 geodetic -> ECEF Cartesian coordinates (m)."""
+    lat = np.radians(lat_deg)
+    lon = np.radians(lon_deg)
+    sin_lat = np.sin(lat)
+    cos_lat = np.cos(lat)
+
+    n = WGS84_A / np.sqrt(1.0 - WGS84_E2 * sin_lat**2)
+
+    x = (n + h_m) * cos_lat * np.cos(lon)
+    y = (n + h_m) * cos_lat * np.sin(lon)
+    z = (n * (1.0 - WGS84_E2) + h_m) * sin_lat
+    return np.array([x, y, z], dtype=float)
+
+
+def enu_basis(lat_deg, lon_deg):
+    """Return local East, North, Up unit vectors at a reference location."""
+    lat = np.radians(lat_deg)
+    lon = np.radians(lon_deg)
+
+    east = np.array([-np.sin(lon), np.cos(lon), 0.0])
+    north = np.array([
+        -np.sin(lat) * np.cos(lon),
+        -np.sin(lat) * np.sin(lon),
+         np.cos(lat)
+    ])
+    up = np.array([
+        np.cos(lat) * np.cos(lon),
+        np.cos(lat) * np.sin(lon),
+        np.sin(lat)
+    ])
+    return east, north, up
+
+
+def build_forward_scatter_geometry(
+    z_km, x_km, frequency_hz,
+    tx_lat_deg=DOURBES_LAT_DEG, tx_lon_deg=DOURBES_LON_DEG,
+    tx_alt_m=DOURBES_ALT_M,
+    rx_lat_deg=HUMAIN_LAT_DEG, rx_lon_deg=HUMAIN_LON_DEG,
+    rx_alt_m=HUMAIN_ALT_M,
+    meteor_lat_deg=None, meteor_lon_deg=None,
+    meteor_base_alt_m=90_000.0,
+    trail_azimuth_deg=None,
+):
+    """
+    Build the actual bistatic geometry for each trail element.
+
+    The meteor trail is represented in a local ENU frame.  By default its
+    horizontal x-axis is the horizontal Tx->Rx direction, so the model remains
+    compatible with the original 2-D trail representation.
+
+    The absolute trail centre is placed at the geographic midpoint between
+    Tx and Rx unless meteor_lat/lon are supplied.  The specular point is then
+    identified by minimizing R_T + R_R along the model trail.
+
+    Returns:
+        positions_ecef, tx_to_p, rx_to_p, beta, bisector, wavelength
+    """
+    tx = geodetic_to_ecef(tx_lat_deg, tx_lon_deg, tx_alt_m)
+    rx = geodetic_to_ecef(rx_lat_deg, rx_lon_deg, rx_alt_m)
+
+    # Use Humain as the local ENU reference for the trail coordinates.
+    ref_lat = rx_lat_deg if meteor_lat_deg is None else meteor_lat_deg
+    ref_lon = rx_lon_deg if meteor_lon_deg is None else meteor_lon_deg
+    ref = geodetic_to_ecef(ref_lat, ref_lon, meteor_base_alt_m)
+    east, north, up = enu_basis(ref_lat, ref_lon)
+
+    # Horizontal direction from Tx to Rx, projected into the local tangent plane.
+    tx_to_rx = rx - tx
+    tx_to_rx_horizontal = tx_to_rx - np.dot(tx_to_rx, up) * up
+    norm_h = np.linalg.norm(tx_to_rx_horizontal)
+
+    if trail_azimuth_deg is None:
+        xhat = tx_to_rx_horizontal / norm_h
+    else:
+        az = np.radians(trail_azimuth_deg)
+        xhat = np.sin(az) * east + np.cos(az) * north
+        xhat /= np.linalg.norm(xhat)
+
+    # Complete the horizontal basis.
+    yhat = np.cross(up, xhat)
+    yhat /= np.linalg.norm(yhat)
+
+    positions = (
+        ref[None, :]
+        + (x_km * 1000.0)[:, None] * xhat[None, :]
+        + np.zeros((len(z_km), 1))
+        + (z_km * 1000.0)[:, None] * up[None, :]
+    )
+
+    # Unit vectors in the direction of increasing propagation distance.
+    tx_to_p = positions - tx
+    rx_to_p = positions - rx
+
+    r_t = np.linalg.norm(tx_to_p, axis=1)
+    r_r = np.linalg.norm(rx_to_p, axis=1)
+
+    u_t = tx_to_p / r_t[:, None]
+    u_r = rx_to_p / r_r[:, None]
+
+    # Forward-scatter angle: angle between the two outgoing directions
+    # from Tx/Rx to the scattering point.
+    cos_beta = np.clip(np.sum(u_t * u_r, axis=1), -1.0, 1.0)
+    beta = np.arccos(cos_beta)
+
+    # Bistatic Doppler vector is the gradient of total path length:
+    # grad(R_T + R_R) = u_t + u_r.
+    bisector_vector = u_t + u_r
+    bisector_norm = np.linalg.norm(bisector_vector, axis=1)
+    bisector = bisector_vector / bisector_norm[:, None]
+
+    wavelength = C_LIGHT / frequency_hz
+
+    # Identify the geometrical specular point: minimum total propagation path.
+    total_path = r_t + r_r
+    specular_index = np.argmin(total_path)
+
+    return (
+        positions, tx_to_p, rx_to_p, beta, bisector,
+        wavelength, specular_index, total_path
+    )
+
+
+def synthesize_meteor_signal(
+    skew_deg, wind_speed, ratio_fund, ratio_3rd, ratio_5th, alpha_ping,
+    frequency_hz=49.97e6, sample_rate=44100, duration=15.0,
+    carrier_freq=1000.0, snr_db=18.0,
+    meteor_azimuth_deg=None,
+    trajectory_angle_deg=None,
+    specular_altitude_km=90.0,
+):
+    """
+    Parameters added for explicit control of the trail geometry:
+
+    meteor_azimuth_deg : float or None
+        Compass bearing (deg, 0=N, 90=E) of the horizontal projection of
+        the meteor trail. If None (default), the trail is placed in the
+        vertical plane containing the Dourbes->Humain horizontal
+        direction, matching the original 2-D model.
+
+    trajectory_angle_deg : float or None
+        Meteor trajectory angle measured from the local vertical (zenith
+        angle of the trail axis, in degrees). This is the same quantity
+        historically driven by `skew_deg`; if given explicitly it takes
+        precedence over `skew_deg`. Elevation above the horizon is
+        90 - trajectory_angle_deg.
+
+    specular_altitude_km : float
+        Altitude (km) of the trail centre / nominal specular region above
+        the WGS84 ellipsoid. Replaces the previously hardcoded 90 km
+        default used both when building the bistatic geometry and when
+        projecting the wind/entry velocity field onto it.
+    """
+    if trajectory_angle_deg is not None:
+        skew_deg = trajectory_angle_deg
+
     num_samples = int(sample_rate * duration)
     dt = 1.0 / sample_rate
     t = np.linspace(0, duration, num_samples, endpoint=False)
+
+    # Radio wavelength. Doppler is calculated below from the actual
+    # transmitter/meteor/receiver geometry.
+    if frequency_hz <= 0.0:
+        raise ValueError("frequency_hz must be positive")
+    wavelength_m = C_LIGHT / frequency_hz
 
     # 1. Event Timing & Delayed Diffusion Envelope
     t_entry = 2.0  # Impact at t = 2.0s
@@ -44,6 +226,25 @@ def synthesize_meteor_signal(skew_deg, wind_speed, ratio_fund, ratio_3rd, ratio_
     x0 = initial_tilt_slope * z
     dx0_dz = np.gradient(x0, dz)
 
+    # Build the real BRAMS Dourbes -> Humain bistatic geometry.
+    # z is centred on a 90-km trail altitude and x is the horizontal
+    # coordinate in the local Tx-Rx vertical plane.
+    (
+        trail_ecef, tx_to_p, rx_to_p, beta, bistatic_bisector,
+        wavelength_m, specular_index, total_path
+    ) = build_forward_scatter_geometry(
+        z_km=z,
+        x_km=x0,
+        frequency_hz=frequency_hz,
+        meteor_base_alt_m=specular_altitude_km * 1000.0,
+        trail_azimuth_deg=meteor_azimuth_deg,
+    )
+
+    # The geometrical specular point is where Tx-P-R has minimum total path.
+    specular_z_km = z[specular_index]
+    specular_x_km = x0[specular_index]
+    specular_beta_deg = np.degrees(beta[specular_index])
+
     # Multi-Harmonic Atmospheric Wind Shear Field (Fundamental + 3rd + 5th)
     v_fundamental = ratio_fund * np.sin(np.pi * z)
     v_3rd_harmonic = ratio_3rd * np.sin(3.0 * np.pi * z)
@@ -61,6 +262,26 @@ def synthesize_meteor_signal(skew_deg, wind_speed, ratio_fund, ratio_3rd, ratio_
     tau_ping_decay = 0.12    # Time constant for entry velocity decay (s)
     tau_shear_growth = 0.40  # Time constant for wind shear onset (s)
 
+    # The model's local x-axis (trail-normal horizontal direction), computed
+    # once using the same explicit azimuth and specular altitude passed to
+    # build_forward_scatter_geometry above, so the entry/wind velocity field
+    # projects onto a horizontal axis consistent with the actual trail plane
+    # rather than silently falling back to the Tx-Rx bearing at a hardcoded
+    # 90 km altitude.
+    tx = geodetic_to_ecef(DOURBES_LAT_DEG, DOURBES_LON_DEG, DOURBES_ALT_M)
+    rx = geodetic_to_ecef(HUMAIN_LAT_DEG, HUMAIN_LON_DEG, HUMAIN_ALT_M)
+    _, _, up_ref = enu_basis(HUMAIN_LAT_DEG, HUMAIN_LON_DEG)
+
+    if meteor_azimuth_deg is None:
+        horizontal_tx_rx = rx - tx
+        horizontal_tx_rx -= np.dot(horizontal_tx_rx, up_ref) * up_ref
+        xhat = horizontal_tx_rx / np.linalg.norm(horizontal_tx_rx)
+    else:
+        east_ref, north_ref, _ = enu_basis(HUMAIN_LAT_DEG, HUMAIN_LON_DEG)
+        az_rad = np.radians(meteor_azimuth_deg)
+        xhat = np.sin(az_rad) * east_ref + np.cos(az_rad) * north_ref
+        xhat /= np.linalg.norm(xhat)
+
     for i in range(num_samples):
         if not active_mask[i]:
             continue
@@ -71,7 +292,19 @@ def synthesize_meteor_signal(skew_deg, wind_speed, ratio_fund, ratio_3rd, ratio_
         weight_ping = np.exp(-tau / tau_ping_decay)
         weight_shear = 1.0 - np.exp(-tau / tau_shear_growth)
         
-        doppler_z = (weight_ping * v_entry) + (weight_shear * v_wind)
+        # Physical horizontal velocity field (m/s), projected onto the
+        # local x-axis unit vector (xhat) computed above.
+        v_horizontal = (weight_ping * v_entry) + (weight_shear * v_wind)
+
+        velocity_ecef = v_horizontal[:, None] * xhat[None, :]
+
+        # d(R_T + R_R)/dt = v · (u_T + u_R).
+        # Hence f_D = [v · (u_T + u_R)] / lambda.
+        # The magnitude of (u_T + u_R) is 2 cos(beta/2), so this is the
+        # exact bistatic forward-scatter Doppler relation.
+        doppler_z = np.sum(
+            velocity_ecef * bistatic_bisector, axis=1
+        ) * (2.0 * np.cos(beta / 2.0)) / wavelength_m
 
         # --- B. CONTINUOUS TRAIL DEFORMATION & SPECULAR APERTURE ---
         shear_deformation_time = tau * weight_shear * 0.0025
@@ -101,13 +334,27 @@ def synthesize_meteor_signal(skew_deg, wind_speed, ratio_fund, ratio_3rd, ratio_
     noise = np.random.normal(0, np.sqrt(np.mean(echo_signal**2) / snr_lin), num_samples)
 
     final_audio = echo_signal + noise
-    return t, final_audio / np.max(np.abs(final_audio)), z, x0, v_wind
+    return (t, final_audio / np.max(np.abs(final_audio)), z, x0, v_wind,
+            specular_z_km, specular_x_km, specular_beta_deg)
 
 
 def main():
     SAMPLE_RATE = 44100
     DURATION = 15.0
     CARRIER_FREQ = 1000.0
+
+    # BRAMS carrier frequency used by the model.
+    RADIO_FREQUENCY = 49.97e6  # Hz
+
+    # Explicit trail geometry parameters. METEOR_AZIMUTH_DEG=None keeps the
+    # original behaviour (trail plane aligned with the Dourbes->Humain
+    # bearing); set a compass bearing (deg, 0=N, 90=E) to override it.
+    # TRAJECTORY_ANGLE_DEG=None defers to the "Trail Skew" slider below;
+    # set a value to fix the trajectory angle from vertical explicitly.
+    METEOR_AZIMUTH_DEG = None
+    TRAJECTORY_ANGLE_DEG = None
+    SPECULAR_ALTITUDE_KM = 90.0
+
 
     # Initial slider settings
     init_skew  = 12.0
@@ -177,16 +424,23 @@ def main():
         r5th  = s_r5th.val
         alpha = s_alpha.val
 
-        t, audio, z, x0, v_wind = synthesize_meteor_signal(
+        (
+            t, audio, z, x0, v_wind,
+            specular_z_km, specular_x_km, specular_beta_deg
+        ) = synthesize_meteor_signal(
             skew_deg=skew,
             wind_speed=wind,
             ratio_fund=fund,
             ratio_3rd=r3rd,
             ratio_5th=r5th,
             alpha_ping=alpha,
+            frequency_hz=RADIO_FREQUENCY,
             sample_rate=SAMPLE_RATE,
             duration=DURATION,
-            carrier_freq=CARRIER_FREQ
+            carrier_freq=CARRIER_FREQ,
+            meteor_azimuth_deg=METEOR_AZIMUTH_DEG,
+            trajectory_angle_deg=TRAJECTORY_ANGLE_DEG,
+            specular_altitude_km=SPECULAR_ALTITUDE_KM
         )
         current_audio[0] = audio
 
@@ -202,7 +456,11 @@ def main():
             x_t = x0 + (v_wind * tau_step * 0.0025)
             ax_geom.plot(x_t, z, color=col, linewidth=2.0, label=f't = {tau_step:.1f}s')
 
-        ax_geom.set_title("2D Trail Spatial Deformation", color='white', fontsize=11)
+        ax_geom.set_title(
+            f"Trail Deformation | Specular: z={specular_z_km:.2f} km, "
+            f"β={specular_beta_deg:.1f}°",
+            color='white', fontsize=10
+        )
         ax_geom.set_xlabel("Horizontal Position x (km)", color='white')
         ax_geom.set_ylabel("Relative Altitude z (km)", color='white')
         ax_geom.set_xlim(-1.5, 1.5)
@@ -230,7 +488,10 @@ def main():
         )
 
         ax_spec.set_title(
-            f"Meteor Echo Spectrogram  |  Skew: {skew:.1f}°  |  Wind: {wind:.0f}m/s  |  Fund: {fund:.2f}  |  3rd: {r3rd:.2f}  |  5th: {r5th:.2f}  |  alpha: {alpha:.2f}",
+            f"Meteor Echo Spectrogram  |  f₀: {RADIO_FREQUENCY/1e6:.2f} MHz  |  "
+            f"Skew: {skew:.1f}°  |  Wind: {wind:.0f} m/s  |  "
+            f"Fund: {fund:.2f}  |  3rd: {r3rd:.2f}  |  5th: {r5th:.2f}  |  "
+            f"α: {alpha:.2f}  |  β_spec: {specular_beta_deg:.1f}°",
             color='white', fontsize=10
         )
         ax_spec.set_xlabel("Time (seconds)", color='white')

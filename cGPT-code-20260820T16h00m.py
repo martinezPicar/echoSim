@@ -15,10 +15,20 @@ except ImportError:
     HAS_SOUNDDEVICE = False
 
 
-def synthesize_meteor_signal(skew_deg, wind_speed, ratio_fund, ratio_3rd, ratio_5th, alpha_ping, sample_rate=44100, duration=15.0, carrier_freq=1000.0, snr_db=18.0):
+def synthesize_meteor_signal(skew_deg, wind_speed, ratio_fund, ratio_3rd, ratio_5th, alpha_ping, frequency_hz=49.97e6, doppler_geometry_factor=1.0, sample_rate=44100, duration=15.0, carrier_freq=1000.0, snr_db=18.0):
     num_samples = int(sample_rate * duration)
     dt = 1.0 / sample_rate
     t = np.linspace(0, duration, num_samples, endpoint=False)
+
+    # Radio wavelength and velocity-to-Doppler conversion.
+    # v_radial_z is in m/s and doppler_z is in Hz:
+    #     f_D = G * v_radial / lambda
+    c = 299_792_458.0
+    if frequency_hz <= 0.0:
+        raise ValueError("frequency_hz must be positive")
+    if doppler_geometry_factor <= 0.0:
+        raise ValueError("doppler_geometry_factor must be positive")
+    wavelength_m = c / frequency_hz
 
     # 1. Event Timing & Delayed Diffusion Envelope
     t_entry = 2.0  # Impact at t = 2.0s
@@ -71,7 +81,12 @@ def synthesize_meteor_signal(skew_deg, wind_speed, ratio_fund, ratio_3rd, ratio_
         weight_ping = np.exp(-tau / tau_ping_decay)
         weight_shear = 1.0 - np.exp(-tau / tau_shear_growth)
         
-        doppler_z = (weight_ping * v_entry) + (weight_shear * v_wind)
+        # Physical velocity field along the effective Doppler direction (m/s).
+        v_radial_z = (weight_ping * v_entry) + (weight_shear * v_wind)
+
+        # Convert velocity to Doppler frequency in Hz.
+        # G accounts for the transmitter/meteor/receiver geometry.
+        doppler_z = doppler_geometry_factor * v_radial_z / wavelength_m
 
         # --- B. CONTINUOUS TRAIL DEFORMATION & SPECULAR APERTURE ---
         shear_deformation_time = tau * weight_shear * 0.0025
@@ -108,6 +123,14 @@ def main():
     SAMPLE_RATE = 44100
     DURATION = 15.0
     CARRIER_FREQ = 1000.0
+
+    # BRAMS carrier frequency used by the model.
+    RADIO_FREQUENCY = 49.97e6  # Hz
+
+    # Effective Doppler projection factor.
+    # For a real forward-scatter geometry this should be calculated from
+    # the transmitter/meteor/receiver directions.
+    DOPPLER_GEOMETRY_FACTOR = 1.0
 
     # Initial slider settings
     init_skew  = 12.0
@@ -184,6 +207,8 @@ def main():
             ratio_3rd=r3rd,
             ratio_5th=r5th,
             alpha_ping=alpha,
+            frequency_hz=RADIO_FREQUENCY,
+            doppler_geometry_factor=DOPPLER_GEOMETRY_FACTOR,
             sample_rate=SAMPLE_RATE,
             duration=DURATION,
             carrier_freq=CARRIER_FREQ
@@ -230,7 +255,9 @@ def main():
         )
 
         ax_spec.set_title(
-            f"Meteor Echo Spectrogram  |  Skew: {skew:.1f}°  |  Wind: {wind:.0f}m/s  |  Fund: {fund:.2f}  |  3rd: {r3rd:.2f}  |  5th: {r5th:.2f}  |  alpha: {alpha:.2f}",
+            f"Meteor Echo Spectrogram  |  f₀: {RADIO_FREQUENCY/1e6:.2f} MHz  |  "
+            f"Skew: {skew:.1f}°  |  Wind: {wind:.0f} m/s  |  "
+            f"Fund: {fund:.2f}  |  3rd: {r3rd:.2f}  |  5th: {r5th:.2f}  |  α: {alpha:.2f}",
             color='white', fontsize=10
         )
         ax_spec.set_xlabel("Time (seconds)", color='white')

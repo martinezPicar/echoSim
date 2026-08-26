@@ -34,7 +34,8 @@ def synthesize_meteor_signal(skew_deg, wind_speed, ratio_fund, ratio_3rd, ratio_
     global_envelope[active_mask] = rise_env[active_mask] * decay_env[active_mask]
 
     # 2. Altitude Layer Definition & Spatial Profile
-    nz = 4000
+    # Increased spatial resolution (nz=12000) for smoother phase steps across adjacent altitude layers
+    nz = 12000
     z = np.linspace(-1.2, 1.2, nz)
     dz = z[1] - z[0]
 
@@ -77,9 +78,10 @@ def synthesize_meteor_signal(skew_deg, wind_speed, ratio_fund, ratio_3rd, ratio_
         shear_deformation_time = tau * weight_shear * 0.0025
         dxdz_t = dx0_dz + (dv_dz * shear_deformation_time)
 
-        aperture = 0.005 + (0.015 * weight_shear)
+        # Tightened specular aperture to model narrow Fresnel zones accurately
+        aperture = 0.0008 + (0.002 * weight_shear)
         if tau > t_diffusion_start:
-            aperture += 0.010 * (tau - t_diffusion_start)
+            aperture += 0.001 * (tau - t_diffusion_start)
 
         # Scale initial specular ping response with alpha_ping
         ping_boost = 1.0 + (alpha_ping * 4.0 * weight_ping)
@@ -147,13 +149,13 @@ def main():
     s_alpha = Slider(ax_alpha, 'Direct Refl. (alpha)',   0.0, 1.0,   valinit=init_alpha, valstep=0.01, valfmt='%.2f',    color='coral')
 
     # Create Button Widgets
-    btn_trigger = Button(ax_trigger, 'Run\nSimulation', color='darkblue', hovercolor='blue')
+    btn_trigger = Button(ax_trigger, '⚡ Trigger\nSimulation', color='darkblue', hovercolor='blue')
     btn_trigger.label.set_color('white')
 
-    btn_play = Button(ax_play, 'Play\nAudio', color='darkgreen', hovercolor='green')
+    btn_play = Button(ax_play, '▶ Play\nAudio', color='darkgreen', hovercolor='green')
     btn_play.label.set_color('white')
 
-    btn_save = Button(ax_save, 'Save Audio File (.wav)', color='#4a2e00', hovercolor='#8b5a00')
+    btn_save = Button(ax_save, '💾 Save Audio File (.wav)', color='#4a2e00', hovercolor='#8b5a00')
     btn_save.label.set_color('white')
 
     # Apply Styling to Sliders
@@ -218,12 +220,13 @@ def main():
             text.set_color('white')
 
         # 2. UPDATE SPECTROGRAM PLOT
+        # Increased NFFT size to 16384 and noverlap to 14336 for high spectral resolution
         ax_spec.clear()
         ax_spec.specgram(
             audio,
-            NFFT=8192,
+            NFFT=16384,
             Fs=SAMPLE_RATE,
-            noverlap=7168,
+            noverlap=14336,
             cmap='jet',
             vmin=-60,
             vmax=-10
