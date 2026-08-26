@@ -166,7 +166,7 @@ def build_forward_scatter_geometry(
 
 
 def synthesize_meteor_signal(
-    skew_deg, wind_speed, ratio_fund, ratio_3rd, ratio_5th, alpha_ping,
+    skew_deg, wind_speed, ratio_fund, ratio_2nd, ratio_3rd,
     meteor_azimuth_deg=45.0,
     meteor_elevation_deg=30.0,
     specular_altitude_km=90.0,
@@ -228,11 +228,11 @@ def synthesize_meteor_signal(
     specular_x_km = x0[specular_index]
     specular_beta_deg = np.degrees(beta[specular_index])
 
-    # Multi-Harmonic Atmospheric Wind Shear Field (Fundamental + 3rd + 5th)
+    # Multi-Harmonic Atmospheric Wind Shear Field (Fundamental + 2nd + 3rd)
     v_fundamental = ratio_fund * np.sin(np.pi * z)
+    v_2nd_harmonic = ratio_2nd * np.sin(2.0 * np.pi * z)
     v_3rd_harmonic = ratio_3rd * np.sin(3.0 * np.pi * z)
-    v_5th_harmonic = ratio_5th * np.sin(5.0 * np.pi * z)
-    v_wind = wind_speed * (v_fundamental + v_3rd_harmonic + v_5th_harmonic)
+    v_wind = wind_speed * (v_fundamental + v_2nd_harmonic + v_3rd_harmonic)
     dv_dz = np.gradient(v_wind, dz)
 
     # Initial entry velocity field (rapid deceleration/ionization ping)
@@ -300,9 +300,7 @@ def synthesize_meteor_signal(
         if tau > t_diffusion_start:
             aperture += 0.010 * (tau - t_diffusion_start)
 
-        # Scale initial specular ping response with alpha_ping
-        ping_boost = 1.0 + (alpha_ping * 4.0 * weight_ping)
-        specular_weight = ping_boost * np.exp(-(dxdz_t ** 2) / aperture)
+        specular_weight = np.exp(-(dxdz_t ** 2) / aperture)
 
         # --- C. PHASE INTEGRATION ---
         inst_freq_z = carrier_freq + doppler_z
@@ -325,7 +323,7 @@ def synthesize_meteor_signal(
 
 
 def main():
-    SAMPLE_RATE = 44100
+    SAMPLE_RATE = 22050 #44100
     DURATION = 15.0
     CARRIER_FREQ = 1000.0
 
@@ -339,8 +337,7 @@ def main():
     init_wind  = 80.0
     init_fund  = 1.00
     init_r3rd  = 0.10
-    init_r5th  = 0.00
-    init_alpha = 0.50
+    init_r2nd  = 0.00
     init_azimuth = 45.0
     init_elevation = 30.0
     init_specular_altitude = 90.0
@@ -355,13 +352,12 @@ def main():
 
     # Slider Control Axes
     ax_skew  = fig.add_axes([0.18, 0.340, 0.52, 0.022], facecolor='#1f1f1f')
-    ax_wind  = fig.add_axes([0.18, 0.296, 0.52, 0.022], facecolor='#1f1f1f')
-    ax_fund  = fig.add_axes([0.18, 0.251, 0.52, 0.022], facecolor='#1f1f1f')
-    ax_r3rd  = fig.add_axes([0.18, 0.207, 0.52, 0.022], facecolor='#1f1f1f')
-    ax_r5th  = fig.add_axes([0.18, 0.163, 0.52, 0.022], facecolor='#1f1f1f')
-    ax_alpha = fig.add_axes([0.18, 0.119, 0.52, 0.022], facecolor='#1f1f1f')
-    ax_az    = fig.add_axes([0.18, 0.074, 0.52, 0.022], facecolor='#1f1f1f')
-    ax_el    = fig.add_axes([0.18, 0.030, 0.52, 0.022], facecolor='#1f1f1f')
+    ax_wind  = fig.add_axes([0.18, 0.293, 0.52, 0.022], facecolor='#1f1f1f')
+    ax_fund  = fig.add_axes([0.18, 0.247, 0.52, 0.022], facecolor='#1f1f1f')
+    ax_r2nd  = fig.add_axes([0.18, 0.200, 0.52, 0.022], facecolor='#1f1f1f')
+    ax_r3rd  = fig.add_axes([0.18, 0.153, 0.52, 0.022], facecolor='#1f1f1f')
+    ax_az    = fig.add_axes([0.18, 0.107, 0.52, 0.022], facecolor='#1f1f1f')
+    ax_el    = fig.add_axes([0.18, 0.060, 0.52, 0.022], facecolor='#1f1f1f')
 
     # Control Button Axes
     ax_trigger = fig.add_axes([0.75, 0.22, 0.10, 0.12], facecolor='#2d2d2d')
@@ -372,9 +368,8 @@ def main():
     s_skew  = Slider(ax_skew,  'Trail Skew (°)',         1.0, 45.0,  valinit=init_skew,  valstep=0.5,  valfmt='%.1f°',   color='cyan')
     s_wind  = Slider(ax_wind,  'Wind Speed (m/s)',       20.0, 150.0, valinit=init_wind,  valstep=1.0,  valfmt='%.0f m/s', color='lime')
     s_fund  = Slider(ax_fund,  'Fundamental Ratio',      0.0, 1.0,   valinit=init_fund,  valstep=0.01, valfmt='%.2f',    color='yellow')
+    s_r2nd  = Slider(ax_r2nd,  '2nd Harmonic Ratio',     0.0, 0.5,   valinit=init_r2nd,  valstep=0.01, valfmt='%.2f',    color='magenta')
     s_r3rd  = Slider(ax_r3rd,  '3rd Harmonic Ratio',     0.0, 0.5,   valinit=init_r3rd,  valstep=0.01, valfmt='%.2f',    color='orange')
-    s_r5th  = Slider(ax_r5th,  '5th Harmonic Ratio',     0.0, 0.5,   valinit=init_r5th,  valstep=0.01, valfmt='%.2f',    color='magenta')
-    s_alpha = Slider(ax_alpha, 'Direct Refl. (alpha)',   0.0, 1.0,   valinit=init_alpha, valstep=0.01, valfmt='%.2f',    color='coral')
     s_az    = Slider(ax_az,    'Azimuth (°)',            0.0, 360.0, valinit=init_azimuth,   valstep=1.0, valfmt='%.0f°', color='deepskyblue')
     s_el    = Slider(ax_el,    'Elevation (°)',          0.0, 90.0,  valinit=init_elevation, valstep=1.0, valfmt='%.0f°', color='violet')
 
@@ -389,7 +384,7 @@ def main():
     btn_save.label.set_color('white')
 
     # Apply Styling to Sliders
-    for s in [s_skew, s_wind, s_fund, s_r3rd, s_r5th, s_alpha, s_az, s_el]:
+    for s in [s_skew, s_wind, s_fund, s_r2nd, s_r3rd, s_az, s_el]:
         s.label.set_color('white')
         s.valtext.set_color('white')
 
@@ -405,9 +400,8 @@ def main():
         skew  = s_skew.val
         wind  = s_wind.val
         fund  = s_fund.val
+        r2nd  = s_r2nd.val
         r3rd  = s_r3rd.val
-        r5th  = s_r5th.val
-        alpha = s_alpha.val
         azimuth = s_az.val
         elevation = s_el.val
         specular_altitude = SPECULAR_ALTITUDE_KM
@@ -419,9 +413,8 @@ def main():
             skew_deg=skew,
             wind_speed=wind,
             ratio_fund=fund,
+            ratio_2nd=r2nd,
             ratio_3rd=r3rd,
-            ratio_5th=r5th,
-            alpha_ping=alpha,
             meteor_azimuth_deg=azimuth,
             meteor_elevation_deg=elevation,
             specular_altitude_km=specular_altitude,
@@ -467,29 +460,27 @@ def main():
         ax_spec.clear()
         ax_spec.specgram(
             audio,
-            NFFT=32768, #8192,
+            NFFT=16384, #8192,
             Fs=SAMPLE_RATE,
-            noverlap=24576, #7168,
+            noverlap=14254, #5358, #13631, #7168,
             cmap='jet',
-            vmin=-120, #-60,
+            vmin=-80, #-60,
             vmax=0, #-10
         )
 
         ax_spec.set_title(
-            f"Meteor Echo Spectrogram  |  f₀: {RADIO_FREQUENCY/1e6:.2f} MHz  |  "
+            f"Meteor Echo Spectrogram  |  "
             f"Skew: {skew:.1f}°  |  Wind: {wind:.0f} m/s  |  "
-            f"Fund: {fund:.2f}  |  3rd: {r3rd:.2f}  |  5th: {r5th:.2f}  |  "
-            f"α: {alpha:.2f}  |  Az: {azimuth:.0f}°  |  "
-            f"El: {elevation:.0f}°  |  h_spec: {specular_altitude:.1f} km  |  "
-            f"β_spec: {specular_beta_deg:.1f}°",
+            f"Fund: {fund:.2f}  |  2nd: {r2nd:.2f}  |  3rd: {r3rd:.2f}  |  "
+            f"Az: {azimuth:.0f}°  |  El: {elevation:.0f}°",
             color='white', fontsize=10
         )
         ax_spec.set_xlabel("Time (seconds)", color='white')
         ax_spec.set_ylabel("Doppler Offset (Hz) [Relative to Center Carrier]", color='white')
-        ax_spec.set_ylim(CARRIER_FREQ - 100, CARRIER_FREQ + 100)
+        ax_spec.set_ylim(CARRIER_FREQ - 120, CARRIER_FREQ + 120)
         ax_spec.set_xlim(0, 12)
 
-        ticks = np.linspace(CARRIER_FREQ - 100, CARRIER_FREQ + 100, 9)
+        ticks = np.linspace(CARRIER_FREQ - 120, CARRIER_FREQ + 120, 9)
         tick_labels = [f"{int(f - CARRIER_FREQ):+d} Hz" for f in ticks]
         ax_spec.set_yticks(ticks)
         ax_spec.set_yticklabels(tick_labels, color='white')
