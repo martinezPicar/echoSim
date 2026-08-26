@@ -486,10 +486,10 @@ def main():
         )
         ax_spec.set_xlabel("Time (seconds)", color='white')
         ax_spec.set_ylabel("Doppler Offset (Hz) [Relative to Center Carrier]", color='white')
-        ax_spec.set_ylim(CARRIER_FREQ - 120, CARRIER_FREQ + 120)
+        ax_spec.set_ylim(CARRIER_FREQ - 100, CARRIER_FREQ + 100)
         ax_spec.set_xlim(0, 12)
 
-        ticks = np.linspace(CARRIER_FREQ - 120, CARRIER_FREQ + 120, 9)
+        ticks = np.linspace(CARRIER_FREQ - 100, CARRIER_FREQ + 100, 9)
         tick_labels = [f"{int(f - CARRIER_FREQ):+d} Hz" for f in ticks]
         ax_spec.set_yticks(ticks)
         ax_spec.set_yticklabels(tick_labels, color='white')
