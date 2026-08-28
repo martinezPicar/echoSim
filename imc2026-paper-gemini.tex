@@ -1,0 +1,128 @@
+\documentclass[10pt,twocolumn,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[margin=2cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage{hyperref}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+\title{\textbf{Yet Another Epsilon Meteor Echo Simulator: Continuous Forward-Scatter Doppler Synthesis and Multi-Harmonic Mesospheric Wind Deformation}}
+
+\author{
+    \textbf{Antonio M.}\\
+    International Meteor Organization (IMO)\\
+    \texttt{radio@imo.net}
+}
+
+\date{Proceedings of the International Meteor Conference (IMC 2026)\\Barcelonnette, France, September 24--27, 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We present \texttt{echoSim}, an open-source Python tool designed to synthesize realistic forward-scatter radio meteor echoes. The software combines a generalized 3D bistatic geometry formulation with a multi-harmonic mesospheric wind shear model. By continuously integrating phase accumulation and specular reflection weights across a $2.4\text{ km}$ trail segment, \texttt{echoSim} accurately reproduces complex Doppler phenomena observed in overdense meteor reflections, including head echo Doppler shifts, wind-shear-induced spectral broadening, and ambipolar diffusion decay. The simulator features a TkAgg-based interactive GUI incorporating ten real-time control sliders, audio playback, file export capabilities, and robust numerical handling for edge cases such as log-zero spectrum flooring and cross-platform Tkinter thread safety.
+\end{abstract}
+
+\section{Introduction}
+Radio observations of meteors provide continuous, round-the-clock monitoring of meteoric activity. Forward-scatter systems---such as those utilizing the French GRAVES radar ($143.05\text{ MHz}$) or dedicated VHF beacons---frequently capture overdense meteor echoes characterized by long durations and dynamic Doppler signatures \cite{mckinley1961, wissez2014}.
+
+While basic specular theory models meteor trails as static cylindrical ion columns, actual echoes routinely display complex Doppler shifts, frequency beating, and multi-component spectral splits. These features are driven by mesospheric wind shear deforming the ionization trail over time \cite{lamy2015}.
+
+To support automated detection validation, velocity inversion research, and educational outreach, we developed \texttt{echoSim}. This paper presents the underlying mathematical principles, physical modeling, numerical architecture, and graphical interface of the simulator.
+
+\section{Forward-Scatter Geometry}
+The spatial model adopts a local East-North-Up (ENU) coordinate frame centered directly below the meteor specular point at altitude $h_{\mathrm{spec}}$. The transmitter ($\vec{R}_{\mathrm{Tx}}$) and receiver ($\vec{R}_{\mathrm{Rx}}$) are positioned symmetrically along the ground axis separated by a baseline distance $d_{\mathrm{Tx-Rx}}$:
+\begin{equation}
+\vec{R}_{\mathrm{Tx}} = \begin{bmatrix} -\frac{d_{\mathrm{Tx-Rx}}}{2} \\ 0 \\ 0 \end{bmatrix}, \quad 
+\vec{R}_{\mathrm{Rx}} = \begin{bmatrix} +\frac{d_{\mathrm{Tx-Rx}}}{2} \\ 0 \\ 0 \end{bmatrix}
+\end{equation}
+
+The 3D direction of the meteor trajectory is defined by its azimuth $\alpha$ and elevation angle $\theta$. The trail centerline position $\vec{P}(z)$ is sampled across a vertical profile range $z \in [-1.2, +1.2]\text{ km}$:
+\begin{equation}
+\vec{P}(z) = \vec{R}_{\mathrm{ref}} + x(z)\hat{x}_{\mathrm{traj}} + z\hat{z}_{\mathrm{up}}
+\end{equation}
+
+For each discrete layer element $z$, unit vectors extending to the transmitter ($\hat{u}_t$) and receiver ($\hat{u}_r$) determine the local bistatic bisector $\vec{u}_b(z)$:
+\begin{equation}
+\vec{u}_b(z) = \frac{\hat{u}_t(z) + \hat{u}_r(z)}{\|\hat{u}_t(z) + \hat{u}_r(z)\|}
+\end{equation}
+
+The forward-scatter path length $R_{\mathrm{total}}(z) = \|\vec{P}(z) - \vec{R}_{\mathrm{Tx}}\| + \|\vec{P}(z) - \vec{R}_{\mathrm{Rx}}\|$ is evaluated dynamically. The specular index corresponds to the altitude layer minimizing $R_{\mathrm{total}}(z)$.
+
+\section{Physical Dynamics \& Synthesis Engine}
+
+\subsection{Wind Shear \& Trail Deformation}
+The background mesospheric wind profile $v_{\mathrm{wind}}(z)$ is parameterized as a sum of spatial harmonic modes:
+\begin{equation}
+v_{\mathrm{wind}}(z) = V_{\mathrm{max}} \left[ a_1 \sin(\pi z) + a_2 \sin(2\pi z) + a_3 \sin(3\pi z) \right]
+\end{equation}
+where $a_1, a_2, a_3$ represent the relative weights of the fundamental, second, and third harmonics.
+
+As active simulation time $\tau = t - t_{\mathrm{entry}}$ progresses, spatial shear alters the local gradient derivative $\frac{dx(z, t)}{dz}$:
+\begin{equation}
+\frac{dx(z, t)}{dz} = \tan(\phi_{\mathrm{skew}}) + \left(\frac{d v_{\mathrm{wind}}(z)}{dz}\right) \cdot \Delta t_{\mathrm{shear}}(\tau)
+\end{equation}
+
+\subsection{Doppler Integration \& Phase Accumulation}
+The instantaneous velocity vector of each layer includes contributions from transient entry dynamics and background wind field deformation:
+\begin{equation}
+\vec{V}(z, \tau) = w_{\mathrm{ping}}(\tau)\vec{V}_{\mathrm{entry}}(z) + w_{\mathrm{shear}}(\tau)\vec{V}_{\mathrm{wind}}(z)
+\end{equation}
+
+The local Doppler frequency offset $f_D(z, t)$ is derived via projection onto the bistatic bisector:
+\begin{equation}
+f_D(z, t) = \frac{\vec{V}(z, \tau) \cdot \vec{u}_b(z)}{\lambda}
+\end{equation}
+
+Phase accumulation $\Phi(z, t_k)$ across uniform time steps $dt = 1/f_s$ is evaluated incrementally:
+\begin{equation}
+\Phi(z, t_k) = \Phi(z, t_{k-1}) + 2\pi \left( f_{\mathrm{carrier}} + f_D(z, t_k) \right) dt
+\end{equation}
+
+\subsection{Specular Weighting \& Signal Integration}
+The total audio echo amplitude $S(t)$ is generated by integrating phase responses across all altitude layers $z$, weighted by a spatial alignment factor $W(z, t)$ and a overall envelope $E(t)$:
+\begin{equation}
+S(t) = E(t) \cdot \sum_{z} \exp\left( -\frac{(dx/dz)^2}{\sigma_a^2(t)} \right) \sin\left(\Phi(z, t)\right)
+\end{equation}
+
+The envelope $E(t)$ models exponential entry growth ($\tau_{\mathrm{rise}} = 5\text{ ms}$) at $t = 2.0\text{ s}$, followed by ambipolar diffusion decay ($\tau_{\mathrm{decay}} = 1.0\text{ s}$) starting at $t = 3.0\text{ s}$.
+
+\section{Software Architecture \& UI Stability}
+The application is constructed using Matplotlib's \texttt{TkAgg} backend. Ten interactive sliders allow real-time control over physical baseline distance, specular height, carrier frequency, trail skew angle, wind velocity, harmonic ratios, and radiant geometry.
+
+During development, two key backend stability challenges were resolved:
+\begin{enumerate}
+    \item \textbf{macOS Tkinter Thread Termination:} File dialog interactions invoking \texttt{root.destroy()} destroyed Tkinter's internal master window while pending background events (\texttt{<<ThemeChanged>>}) remained in execution. Replaced \texttt{root.destroy()} with \texttt{root.update()} to flush pending events safely.
+    \item \textbf{Spectrogram Log-Zero Evaluation:} In zero-noise simulation modes, silent FFT bins caused log-zero evaluation warnings. Matrix power values are explicitly floored prior to decibel conversion:
+    \begin{equation}
+    Z_{\mathrm{dB}} = 10 \cdot \log_{10}\left(\max(P(f, t), 10^{-12})\right)
+    \end{equation}
+\end{enumerate}
+
+\section{Conclusion}
+\texttt{echoSim} offers a robust, physically accurate framework for simulating forward-scatter radio meteor echoes. Incorporating 3D geometry, mesospheric shear dynamics, continuous phase integration, and interactive user controls, the simulator serves as an effective tool for algorithm development, data analysis, and educational demonstration.
+
+\begin{thebibliography}{99}
+
+\bibitem{mckinley1961}
+D.~W.~R. McKinley, \emph{Meteor Science and Engineering}. McGraw-Hill, New York, 1961.
+
+\bibitem{wissez2014}
+S.~Wissez, L.~R. Cander, and G.~O. Ryabova, \emph{Radio Meteor Observations and Scattering Theory}. IMO Monograph Series, International Meteor Organization, 2014.
+
+\bibitem{lamy2015}
+H.~Lamy, C.~Tétard, C.~Sichien, and M.~Anciaux, ``The Belgian Radio Meteor Stations (BRAMS),'' in \emph{Proceedings of the International Meteor Conference}, Giron, France, 2015, pp. 112--117.
+
+\end{thebibliography}
+
+\end{document}

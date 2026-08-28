@@ -1,0 +1,189 @@
+\documentclass[aspectratio=169, 10pt]{beamer}
+
+% --- Theme and Visual Styling ---
+\usetheme{Metropolis}
+\usecolortheme{owl} % Dark theme matching the GUI aesthetics
+
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+
+% --- Presentation Metadata ---
+\title{Yet Another Epsilon Meteor Echo Simulator}
+\subtitle{Continuous Forward-Scatter Doppler Synthesis, Multi-Harmonic Wind Shear, and Interactive GUI}
+\author{\textbf{Antonio M.}}
+\institute{International Meteor Organization (IMO) / Radio Observation Group}
+\date{International Meteor Conference 2026\\Barcelonnette, France --- September 24--27, 2026}
+
+\begin{document}
+
+% ---------------------------------------------------------------------------
+% Slide 1: Title Slide
+% ---------------------------------------------------------------------------
+\begin{frame}[plain]
+    \titlepage
+\end{frame}
+
+% ---------------------------------------------------------------------------
+% Slide 2: Context & Motivation
+% ---------------------------------------------------------------------------
+\begin{frame}{Context \& Motivation}
+    \begin{itemize}
+        \item \textbf{Why simulate overdense radio meteor echoes?}
+        \begin{itemize}
+            \item Generate controlled synthetic datasets to train automated detection algorithms.
+            \item Validate mesospheric wind shear and velocity inversion models.
+            \item Provide an accessible, interactive teaching tool for amateur and professional observers.
+        \end{itemize}
+        \vspace{0.3cm}
+        \item \textbf{Limitations of Classical Analytic Models:}
+        \begin{itemize}
+            \item Static specular cylinder assumptions fail to reflect dynamic mesospheric reality.
+            \item Miss key signatures: body Doppler shifts, multi-component splitting, and phase beating.
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+% Slide 3: 3D Forward-Scatter Geometry
+% ---------------------------------------------------------------------------
+\begin{frame}{3D Forward-Scatter Geometry}
+    \begin{columns}
+        \begin{column}{0.55\textwidth}
+            \begin{itemize}
+                \item Parameterized relative to specular center at altitude $h_{\mathrm{spec}}$ ($85\text{--}130\text{ km}$).
+                \item Ground baseline distance $d_{\mathrm{Tx-Rx}}$ ranges from $20\text{ to }200\text{ km}$.
+                \item 3D trajectory defined by Azimuth ($\alpha$) and Elevation ($\theta$).
+                \item Local Doppler shifts depend on projection onto the \textbf{bistatic bisector}:
+            \end{itemize}
+            \begin{equation*}
+                \vec{u}_b(z) = \frac{\hat{u}_t(z) + \hat{u}_r(z)}{\|\hat{u}_t(z) + \hat{u}_r(z)\|}
+            \end{equation*}
+        \end{column}
+        \begin{column}{0.42\textwidth}
+            \begin{block}{Vector Mechanics}
+                \begin{itemize}
+                    \item $\vec{r}_t(z) = \vec{P}(z) - \vec{R}_{\mathrm{Tx}}$
+                    \item $\vec{r}_r(z) = \vec{P}(z) - \vec{R}_{\mathrm{Rx}}$
+                    \item Path length: $R_{\mathrm{total}}(z) = \|\vec{r}_t\| + \|\vec{r}_r\|$
+                \end{itemize}
+            \end{block}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+% Slide 4: Multi-Harmonic Wind Shear & Dynamics
+% ---------------------------------------------------------------------------
+\begin{frame}{Multi-Harmonic Wind Shear \& Dynamics}
+    \begin{itemize}
+        \item \textbf{Layered Mesospheric Wind Field Profile:}
+        \begin{equation*}
+            v_{\mathrm{wind}}(z) = V_{\mathrm{max}} \left[ a_1 \sin(\pi z) + a_2 \sin(2\pi z) + a_3 \sin(3\pi z) \right]
+        \end{equation*}
+        \item \textbf{Trail Deformation Dynamics:}
+        \begin{itemize}
+            \item $t < 0.12\text{ s}$: Rapid transient entry phase along trajectory line.
+            \item $t > 0.40\text{ s}$: Background wind shear dominates, generating gradients $\frac{dx(z,t)}{dz}$.
+        \end{itemize}
+        \item \textbf{Specular Reflection Weighting:}
+        \begin{equation*}
+            W_{\mathrm{spec}}(z, t) = \exp\left( -\frac{(dx/dz)^2}{\sigma_a^2(t)} \right)
+        \end{equation*}
+    \end{itemize}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+% Slide 5: Signal Synthesis Engine
+% ---------------------------------------------------------------------------
+\begin{frame}{Signal Synthesis Engine}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \textbf{Continuous Phase Integration:}
+            \begin{equation*}
+                f_D(z, t) = \frac{\vec{V}(z, t) \cdot \vec{u}_b(z)}{\lambda}
+            \end{equation*}
+            \begin{equation*}
+                \Phi(z, t_k) = \Phi(z, t_{k-1}) + 2\pi (f_0 + f_D) dt
+            \end{equation*}
+            \vspace{0.1cm}
+            \textbf{Composite Signal Composite:}
+            \begin{equation*}
+                S(t) = E(t) \cdot \sum_{z} W_{\mathrm{spec}}(z, t) \sin\left(\Phi(z, t)\right)
+            \end{equation*}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{block}{Temporal Envelopes $E(t)$}
+                \begin{itemize}
+                    \item Fast entry rise time ($\tau = 5\text{ ms}$).
+                    \item Thermal ambipolar diffusion decay ($\tau = 1.0\text{ s}$).
+                    \item Calibrated additive thermal Gaussian noise ($\text{SNR}_{\mathrm{dB}}$).
+                \end{itemize}
+            \end{block}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+% Slide 6: Interactive GUI Architecture
+% ---------------------------------------------------------------------------
+\begin{frame}{Interactive GUI Architecture}
+    \begin{itemize}
+        \item \textbf{10 Real-Time Control Sliders:} Distance, Altitude, Carrier Freq, Skew Angle, Wind Velocity, Harmonic Ratios ($a_1, a_2, a_3$), Azimuth, and Elevation.
+        \item \textbf{Key Technical Robustness Fixes Implemented:}
+        \begin{enumerate}
+            \item \textit{Aspect-Ratio Distortion}: Decoupled toggle checkboxes into physical-aspect frame axes.
+            \item \textit{macOS Tkinter Crashing}: Replaced \texttt{root.destroy()} with \texttt{root.update()} inside OS file dialog event callbacks to preserve master GUI loop safety.
+            \item \textit{Spectrogram Log-Zero Warnings}: Implemented matrix power spectrum flooring ($\max(P, 10^{-12})$) prior to decibel scaling.
+        \end{enumerate}
+    \end{itemize}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+% Slide 7: Results & Comparison with Observations
+% ---------------------------------------------------------------------------
+\begin{frame}{Results \& Spectrogram Characteristics}
+    \begin{itemize}
+        \item \textbf{Head Echo Signature:} Captures early high-velocity Doppler offsets upon meteor entry.
+        \item \textbf{Doppler "Snores":} Successfully reproduces symmetrical spectral broadening driven by wind shear deformation.
+        \item \textbf{Multi-Pip Splitting \& Beating:} Replicates phase interference across multiple active reflection centers, matching observations from networks like BRAMS and GRAVES receivers.
+    \end{itemize}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+% Slide 8: Summary & Conclusions
+% ---------------------------------------------------------------------------
+\begin{frame}{Summary \& Future Work}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \begin{block}{Conclusions}
+                \begin{itemize}
+                    \item Built a physically accurate, lightweight Python forward-scatter simulator.
+                    \item Combines 3D bistatic geometry with multi-harmonic mesospheric shear dynamics.
+                    \item Real-time controls with high-dpi audio and plot export features.
+                \end{itemize}
+            \end{block}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \begin{block}{Future Extensions}
+                \begin{itemize}
+                    \item Add Faraday rotation & polarization dynamics.
+                    \item Direct Digital Synthesizer (DDS) raw I/Q baseband export.
+                    \item Automated spectral curve fitting against observed echoes.
+                \end{itemize}
+            \end{block}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+% Slide 9: Q&A / Thank You
+% ---------------------------------------------------------------------------
+\begin{frame}[standout]
+    Thank You!\\
+    \vspace{0.5cm}
+    \large Questions \& Discussion
+\end{frame}
+
+\end{document}

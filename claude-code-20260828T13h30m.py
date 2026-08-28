@@ -252,8 +252,9 @@ def main():
     ax_az    = fig.add_axes([0.15, 0.120, 0.52, 0.018], facecolor='#1f1f1f')
     ax_el    = fig.add_axes([0.15, 0.085, 0.52, 0.018], facecolor='#1f1f1f')
 
-    # Equalized Control & Checkbox Axes
-    ax_noise    = fig.add_axes([0.72, 0.373, 0.23, 0.045], facecolor='#000000')
+    # Equalized Control & Checkbox Axes (5 controls stacked vertically, same height & width)
+    # Total Vertical Span: 0.080 to 0.418 | Height: 0.045 | Spacing: 0.012
+    ax_noise    = fig.add_axes([0.72, 0.373, 0.23, 0.045], facecolor='#000000') # #1f1f1f is the original grey color
     ax_noise.set_xticks([])
     ax_noise.set_yticks([])
 
@@ -274,23 +275,34 @@ def main():
     s_az    = Slider(ax_az,    'Azimuth (°)',         0.0,  360.0, valinit=init_azimuth,valstep=1.0, valfmt='%.0f°', color='deepskyblue')
     s_el    = Slider(ax_el,    'Elevation (°)',       0.0,  90.0,  valinit=init_elevation,valstep=1.0,valfmt='%.0f°', color='violet')
 
-    # Checkbox Selector Instantiation
-    _chk_side_in = 0.34
+    # Checkbox Selector Instantiation (Default: Checked / ON)
+    # ax_noise (above) is wide and short (0.23 x 0.045 fig-fraction -> ~3.7in x 0.45in),
+    # so a checkbox sized as a fraction of *that* box comes out squashed into a
+    # rectangle. Instead, the checkbox mark gets its own small inset axes whose
+    # fig-fraction width/height are chosen so the box is physically square (same
+    # side length in inches), regardless of matplotlib version.
+    _chk_side_in = 0.34  # physical side length of the checkbox square, in inches
     _fig_w_in, _fig_h_in = fig.get_size_inches()
     _chk_w = _chk_side_in / _fig_w_in
     _chk_h = _chk_side_in / _fig_h_in
     _row_x, _row_bottom, _row_h = 0.73, 0.373, 0.045
     ax_noise_chk = fig.add_axes(
         [_row_x, _row_bottom + (_row_h - _chk_h) / 2.0, _chk_w, _chk_h],
-        facecolor='#000000'
+        facecolor='#000000' # #1f1f1f is the original grey color
     )
     chk_noise = CheckButtons(ax_noise_chk, ['Add Background Noise'], [True])
 
     for label in chk_noise.labels:
         label.set_color('white')
         label.set_fontsize(10)
+        # Default label x-position (0.25, axes-fraction) falls inside the checkbox
+        # square (which spans 0.05-0.55 below) — push it out to the right of the box.
+        # Text isn't clipped by the axes bounds, so it reads out into the row space.
         label.set_x(0.75)
 
+    # Enlarge + recolor the frame/check-mark. Works with both the classic
+    # Rectangle/Line2D CheckButtons implementation (matplotlib < 3.7) and the
+    # modern scatter-marker implementation (matplotlib >= 3.7).
     if hasattr(chk_noise, 'rectangles'):
         for rect in chk_noise.rectangles:
             rect.set_bounds(0.05, 0.25, 0.5, 0.5)
@@ -344,6 +356,7 @@ def main():
         azimuth   = s_az.val
         elevation = s_el.val
 
+        # Read checkbox state dynamically when Run Simulation button is clicked
         use_noise = chk_noise.get_status()[0]
 
         (
@@ -402,6 +415,12 @@ def main():
         # 2. UPDATE SPECTROGRAM PLOT
         ax_spec.clear()
         
+        # Compute the spectrogram manually (instead of ax_spec.specgram(...)) so we can
+        # floor the power spectrum before the log10. Axes.specgram takes log10(spec)
+        # internally with no floor; adding an epsilon to the time-domain audio only
+        # nudges the DC bin, but with "Add Background Noise" off there are long
+        # silent stretches whose FFT bins have genuinely ~0 power, so log10(0) still
+        # fires. Flooring the power itself (not the audio) fixes this for every bin.
         spec, freqs, t_spec = mlab.specgram(
             audio, NFFT=16384, Fs=SAMPLE_RATE, noverlap=14254
         )
@@ -455,7 +474,7 @@ def main():
             title="Save Meteor Echo Audio"
         )
         
-        root.update()
+        root.destroy()
 
         if file_path:
             pcm_16bit = np.int16(current_audio[0] * 32767)
@@ -473,14 +492,14 @@ def main():
             title="Save Spectrogram Plot Image"
         )
     
-        root.update()
+        root.destroy()
 
         if file_path:
             extent = ax_spec.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
             fig.savefig(file_path, bbox_inches=extent.expanded(1.22, 1.25), dpi=600, facecolor=fig.get_facecolor())
             print(f"Saved high-resolution spectrogram plot image to: {file_path}")
 
-    # Attach Button Callbacks ONLY
+    # Attach Button Callbacks ONLY (No callback on chk_noise)
     btn_trigger.on_clicked(update_plots)
     btn_play.on_clicked(play_audio_event)
     btn_save_wav.on_clicked(save_audio_event)

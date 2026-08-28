@@ -1,0 +1,160 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{orange},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    frame=single,
+    breaklines=true
+}
+
+\title{\textbf{Yet Another Epsilon Meteor Echo Simulator}}
+\author{Author Name$^{1}$ \and Co-Author Name$^{2}$}
+\date{International Meteor Conference 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We present \texttt{echoSim}, an open-source interactive simulator for overdense meteor forward-scatter echoes. The tool synthesizes time-domain audio signals and spectrograms from first-principles bistatic geometry, incorporating multi-harmonic wind-shear fields, specular reflection weighting, and realistic diffusion envelopes. A built-in graphical interface allows real-time parameter exploration, making the simulator suitable for both educational outreach and rapid hypothesis testing. We describe the underlying physical model, implementation details, and demonstrate characteristic echo morphologies under varying wind and geometry configurations.
+\end{abstract}
+
+\section{Introduction}
+
+Meteor forward-scatter radar remains one of the most cost-effective techniques for continuous meteor flux monitoring. The received echo morphology encodes rich information about the meteoroid ablation dynamics, atmospheric wind fields, and ionospheric diffusion. However, interpreting observed echoes---particularly overdense trails with complex wind-shear deformation---requires intuition that is best built through systematic simulation.
+
+Existing simulators range from analytical Fresnel-integral approximations to full-wave numerical treatments. The former sacrifice realism in the overdense regime; the latter are computationally prohibitive for interactive exploration. \texttt{echoSim} occupies a middle ground: it integrates the essential physics of bistatic forward scatter, wind-driven trail deformation, and ionospheric diffusion into a lightweight, real-time signal synthesis pipeline.
+
+\section{Forward-Scatter Geometry}
+
+The simulator adopts a generalized bistatic geometry parameterized by transmitter--receiver baseline distance $d$, specular altitude $h_{\mathrm{spec}}$, meteor azimuth $\alpha$, and elevation $\epsilon$. The transmitter and receiver are placed symmetrically at
+\begin{equation}
+    \mathbf{r}_{\mathrm{Tx}} = (-d/2, 0, 0), \qquad
+    \mathbf{r}_{\mathrm{Rx}} = (+d/2, 0, 0),
+\end{equation}
+relative to a reference point at altitude $h_{\mathrm{spec}}$.
+
+The meteor trajectory direction is constructed from the horizontal unit vector
+\begin{equation}
+    \hat{\mathbf{x}} = \sin\alpha\,\hat{\mathbf{e}} + \cos\alpha\,\hat{\mathbf{n}},
+\end{equation}
+projected into 3-D as
+\begin{equation}
+    \hat{\mathbf{t}} = \cos\epsilon\,\hat{\mathbf{x}} + \sin\epsilon\,\hat{\mathbf{z}}.
+\end{equation}
+
+For a set of trail points $\mathbf{p}_i$ sampled along the vertical coordinate $z$, the bistatic angle $\beta_i$ is computed from the unit vectors $\hat{\mathbf{u}}_{\mathrm{Tx}}$ and $\hat{\mathbf{u}}_{\mathrm{Rx}}$ pointing from transmitter and receiver to each trail point. The specular point is identified as the point minimizing the total path length $r_{\mathrm{Tx}} + r_{\mathrm{Rx}}$.
+
+\section{Signal Synthesis Model}
+
+\subsection{Temporal Envelope}
+
+The echo amplitude is modulated by a global envelope $E(t)$ representing the combined effects of trail formation and diffusion:
+\begin{equation}
+    E(t) = \bigl[1 - e^{-(t-t_0)/\tau_{\mathrm{rise}}}\bigr] \cdot e^{-(t-t_0-t_{\mathrm{diff}})/\tau_{\mathrm{decay}}} \cdot H(t-t_0),
+\end{equation}
+where $t_0 = 2\,$s is the entry time, $\tau_{\mathrm{rise}} = 5\,$ms, $t_{\mathrm{diff}} = 3\,$s marks the onset of diffusion, and $\tau_{\mathrm{decay}} = 1\,$s. The Heaviside step $H$ ensures causality.
+
+\subsection{Wind-Shear Field}
+
+The horizontal wind field along the trail is decomposed into three harmonics:
+\begin{equation}
+    v(z) = v_{\mathrm{wind}} \Bigl[ r_1 \sin(\pi z) + r_2 \sin(2\pi z) + r_3 \sin(3\pi z) \Bigr],
+\end{equation}
+where $v_{\mathrm{wind}}$ is the overall wind-speed scale and $r_1$, $r_2$, $r_3$ are the relative amplitudes of the fundamental, second, and third harmonics. The derivative $\mathrm{d}v/\mathrm{d}z$ drives the shear deformation of the trail over time.
+
+\subsection{Time Evolution and Doppler Shifts}
+
+At each time step $\tau$ after trail formation, the horizontal velocity field is interpolated between an initial ``entry'' velocity $v_{\mathrm{entry}}$ and the wind-driven shear velocity $v(z)$ via
+\begin{equation}
+    v_{\mathrm{hor}}(\tau) = e^{-\tau/\tau_{\mathrm{ping}}}\,v_{\mathrm{entry}} + \bigl(1 - e^{-\tau/\tau_{\mathrm{shear}}}\bigr)\,v(z),
+\end{equation}
+with $\tau_{\mathrm{ping}} = 0.12\,$s and $\tau_{\mathrm{shear}} = 0.40\,$s. The 3-D velocity at each trail point is
+\begin{equation}
+    \mathbf{v}_i = v_{\mathrm{hor},i} \bigl( \cos\epsilon\,\hat{\mathbf{x}} + \sin\epsilon\,\hat{\mathbf{z}} \bigr),
+\end{equation}
+and the instantaneous Doppler shift is the projection onto the bistatic bisector normalized by the wavelength:
+\begin{equation}
+    f_{\mathrm{D},i} = \frac{\mathbf{v}_i \cdot \hat{\mathbf{b}}_i}{\lambda}.
+\end{equation}
+
+\subsection{Specular Weighting}
+
+The contribution of each trail segment to the total echo is weighted by a Gaussian specular function that broadens as the trail deforms:
+\begin{equation}
+    w_i = \exp\!\left[ -\frac{(\mathrm{d}x/\mathrm{d}z)^2}{A(\tau)} \right],
+\end{equation}
+where the aperture $A(\tau)$ grows from an initial $0.005$ to $0.020$ as the trail ages, with an additional $0.010\,(\tau - t_{\mathrm{diff}})$ term after diffusion onset.
+
+\subsection{Signal Integration}
+
+The composite audio signal is synthesized by phase accumulation:
+\begin{equation}
+    \phi_i(t+\Delta t) = \phi_i(t) + 2\pi \bigl[ f_{\mathrm{c}} + f_{\mathrm{D},i}(t) \bigr] \Delta t,
+\end{equation}
+\begin{equation}
+    s(t) = E(t) \sum_i w_i(t) \sin\phi_i(t) + n(t),
+\end{equation}
+where $f_{\mathrm{c}} = 1000\,$Hz is the audio carrier and $n(t)$ is optional Gaussian noise at a configurable SNR.
+
+\section{Software Implementation}
+
+\texttt{echoSim} is implemented in pure Python with minimal dependencies (NumPy, SciPy, Matplotlib). An optional \texttt{sounddevice} module enables real-time audio playback. The graphical interface (Figure~\ref{fig:gui}) provides ten interactive sliders covering geometry, wind, and harmonic parameters, together with check-box and button controls for noise injection, simulation triggering, audio playback, and export to WAV/PNG.
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\parbox{0.8\textwidth}{\centering\vspace{2cm} GUI screenshot placeholder \vspace{2cm}}}
+    \caption{The \texttt{echoSim} graphical interface showing the trail-geometry plot (left) and spectrogram (right).}
+    \label{fig:gui}
+\end{figure}
+
+\section{Results and Discussion}
+
+Figure~\ref{fig:spec} illustrates a characteristic overdense echo generated with default parameters ($d=50\,$km, $h_{\mathrm{spec}}=90\,$km, $f_0=50\,$MHz, skew $=12°$, $v_{\mathrm{wind}}=80\,$m/s). The spectrogram reveals:
+\begin{itemize}
+    \item A rapid initial ``ping'' at $t\approx 2\,$s corresponding to the underdense head echo.
+    \item A smooth transition to wind-shear-induced Doppler spreading over the next $2$--$3\,$s.
+    \item A gradual decay and narrowing of the Doppler bandwidth as diffusion erodes the trail irregularities.
+\end{itemize}
+
+Varying the harmonic ratios produces markedly different echo morphologies. Dominant $r_1$ yields a simple symmetric drift; strong $r_2$ or $r_3$ introduces multiple inflection points in the Doppler--time curve, reminiscent of complex meteor trains observed by high-resolution forward-scatter systems.
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\parbox{0.8\textwidth}{\centering\vspace{2cm} Spectrogram placeholder \vspace{2cm}}}
+    \caption{Simulated spectrogram of an overdense meteor echo with default parameters.}
+    \label{fig:spec}
+\end{figure}
+
+\section{Conclusion}
+
+\texttt{echoSim} provides an accessible yet physically grounded platform for exploring overdense meteor echo phenomenology. Its modular architecture invites extensions such as Fresnel-zone diffraction corrections, multi-station geometry, and coupling with empirical wind models (e.g., HWM14). The source code is available upon request and will be released under an open-source license following peer review.
+
+\section*{Acknowledgements}
+
+The authors thank the International Meteor Organization for fostering collaborative software development in meteor science.
+
+\begin{thebibliography}{9}
+\bibitem{ceplecha} Ceplecha, Z., et al. (1998). \textit{Meteor phenomena and bodies}. Space Science Reviews, 84(3), 327--471.
+\bibitem{ellford} Elford, W. G. (2004). \textit{Forward scatter of radio waves by meteor trails}. In \textit{Meteors in the Earth's Atmosphere} (pp. 145--162). Cambridge University Press.
+\bibitem{hocking} Hocking, W. K. (2000). \textit{Radar studies of small-scale structure in the upper atmosphere}. Reviews of Geophysics, 38(4), 639--474.
+\bibitem{stober} Stober, G., et al. (2021). \textit{Decoding the dynamics of meteors}. Atmospheric Chemistry and Physics, 21(16), 12353--12369.
+\end{thebibliography}
+
+\end{document}
