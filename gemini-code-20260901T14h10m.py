@@ -380,8 +380,7 @@ def main():
         ax_geom.set_xlabel("Horizontal Position x (km)", color='white')
         ax_geom.set_ylabel("Relative Altitude z (km)", color='white')
         
-        # Horizontal Position range updated to [-2.2, 2.2]
-        ax_geom.set_xlim(-2.2, 2.2)
+        ax_geom.set_xlim(-3.0, 3.0)
         ax_geom.set_ylim(-1.2, 1.2)
         ax_geom.tick_params(colors='white')
 

@@ -29,21 +29,31 @@ def build_forward_scatter_geometry(
     meteor_elevation_deg=30.0,
     specular_altitude_km=90.0,
 ):
+    """
+    Build local forward-scatter geometry parameterized by Tx-Rx distance.
+    Tx is placed at (-distance/2, 0, 0) and Rx at (+distance/2, 0, 0) relative
+    to the specular center point at altitude specular_altitude_km.
+    """
     az = np.radians(meteor_azimuth_deg)
     el = np.radians(meteor_elevation_deg)
 
+    # Local ENU basis vectors
     east = np.array([1.0, 0.0, 0.0])
     north = np.array([0.0, 1.0, 0.0])
     up = np.array([0.0, 0.0, 1.0])
 
+    # Horizontal trajectory direction derived from azimuth
     xhat = np.sin(az) * east + np.cos(az) * north
     xhat /= np.linalg.norm(xhat)
 
+    # Full 3D meteor trajectory direction vector
     trajectory_dir = np.cos(el) * xhat + np.sin(el) * up
     trajectory_dir /= np.linalg.norm(trajectory_dir)
 
+    # Center reference point at specular altitude
     ref = np.array([0.0, 0.0, specular_altitude_km * 1000.0])
 
+    # Tx and Rx positions set symmetrically around origin based on baseline distance
     tx = np.array([- (distance_km * 1000.0) / 2.0, 0.0, 0.0])
     rx = np.array([+ (distance_km * 1000.0) / 2.0, 0.0, 0.0])
 
@@ -87,7 +97,7 @@ def synthesize_meteor_signal(
     meteor_azimuth_deg=45.0,
     meteor_elevation_deg=30.0,
     specular_altitude_km=90.0,
-    frequency_hz=50.0e6, sample_rate=22050, duration=60.0,
+    frequency_hz=50.0e6, sample_rate=22050, duration=15.0,
     carrier_freq=1000.0, snr_db=18.0, add_noise=True
 ):
     num_samples = int(sample_rate * duration)
@@ -99,16 +109,12 @@ def synthesize_meteor_signal(
     wavelength_m = C_LIGHT / frequency_hz
 
     # 1. Event Timing & Delayed Diffusion Envelope
-    # Meteor starts at t = 20 s and active physics runs for 15 seconds (until t = 35 s)
-    t_entry = 20.0
-    meteor_duration = 15.0
-    t_end = t_entry + meteor_duration
-
-    active_mask = (t >= t_entry) & (t < t_end)
+    t_entry = 2.0
+    active_mask = t >= t_entry
     t_active = np.maximum(0.0, t - t_entry)
 
     rise_env = 1.0 - np.exp(-t_active / 0.005)
-    t_diffusion_start = 1.0  # 1s after meteor entry (t = 21 s absolute)
+    t_diffusion_start = 3.0
     diffusion_time = np.maximum(0.0, t_active - t_diffusion_start)
     decay_env = np.exp(-diffusion_time / 1.0)
     
@@ -152,16 +158,17 @@ def synthesize_meteor_signal(
 
     v_entry = 8.0 * np.sin(2.0 * np.pi * z) + (15.0 * initial_tilt_slope)
 
-    # 3. Dynamic Signal Synthesis (Only calculated for the 15 s active window)
+    # 3. Continuous Multi-Phase Signal Synthesis Loop
     phase_z = np.zeros(nz)
     echo_signal = np.zeros(num_samples)
 
     tau_ping_decay = 0.12
     tau_shear_growth = 0.40
 
-    active_indices = np.where(active_mask)[0]
+    for i in range(num_samples):
+        if not active_mask[i]:
+            continue
 
-    for i in active_indices:
         tau = t_active[i]
 
         weight_ping = np.exp(-tau / tau_ping_decay)
@@ -194,37 +201,30 @@ def synthesize_meteor_signal(
         reflections = specular_weight * np.sin(phase_z)
         echo_signal[i] = np.sum(reflections) * global_envelope[i]
 
-    # Normalize echo signal peak
-    max_echo = np.max(np.abs(echo_signal))
-    if max_echo > 0:
-        echo_signal = echo_signal / max_echo
+    if np.max(np.abs(echo_signal)) > 0:
+        echo_signal = echo_signal / np.max(np.abs(echo_signal))
 
-    # 4. Fill before/after regions with noise or silence
     if add_noise:
         snr_lin = 10 ** (snr_db / 10.0)
-        signal_power = np.mean(echo_signal[active_mask]**2) if np.any(active_mask) else 1.0
-        noise_std = np.sqrt(signal_power / snr_lin)
-        noise = np.random.normal(0, noise_std, num_samples)
+        noise = np.random.normal(0, np.sqrt(np.mean(echo_signal**2) / snr_lin), num_samples)
         final_audio = echo_signal + noise
     else:
         final_audio = echo_signal
 
-    max_final = np.max(np.abs(final_audio))
-    if max_final > 0:
-        final_audio = final_audio / max_final
-
-    return (t, final_audio, z, x0, v_wind,
+    return (t, final_audio / np.max(np.abs(final_audio)), z, x0, v_wind,
             specular_z_km, specular_x_km, specular_beta_deg)
 
 
 def main():
     SAMPLE_RATE = 22050
-    DURATION = 60.0  # Total timeline extended to 60 seconds
+    DURATION = 15.0
     CARRIER_FREQ = 1000.0
 
-    init_dist  = 50.0   
-    init_hspec = 90.0   
-    init_freq  = 50.0   
+    # Initial slider settings
+    init_dist  = 50.0   # km (20 to 200)
+    init_hspec = 90.0   # km (85 to 130)
+    init_freq  = 50.0   # MHz (30 to 300)
+
     init_skew  = 12.0
     init_wind  = 80.0
     init_fund  = 1.00
@@ -234,11 +234,13 @@ def main():
     init_elevation = 45.0
 
     fig = plt.figure(figsize=(16, 10), facecolor='black')
-    fig.canvas.manager.set_window_title("echoSim – Overdense Meteor Echo Simulator")
+    fig.canvas.manager.set_window_title("Overdense Meteor Echo Simulator — Interactive GUI")
     
+    # Half-and-half equal-width subplots
     ax_geom = fig.add_axes([0.05, 0.48, 0.415, 0.46], facecolor='#050515')
     ax_spec = fig.add_axes([0.535, 0.48, 0.415, 0.46], facecolor='navy')
 
+    # Slider Control Axes (10 Sliders total)
     ax_dist  = fig.add_axes([0.15, 0.400, 0.52, 0.018], facecolor='#1f1f1f')
     ax_hspec = fig.add_axes([0.15, 0.365, 0.52, 0.018], facecolor='#1f1f1f')
     ax_freq  = fig.add_axes([0.15, 0.330, 0.52, 0.018], facecolor='#1f1f1f')
@@ -250,6 +252,7 @@ def main():
     ax_az    = fig.add_axes([0.15, 0.120, 0.52, 0.018], facecolor='#1f1f1f')
     ax_el    = fig.add_axes([0.15, 0.085, 0.52, 0.018], facecolor='#1f1f1f')
 
+    # Equalized Control & Checkbox Axes
     ax_noise    = fig.add_axes([0.72, 0.373, 0.23, 0.045], facecolor='#000000')
     ax_noise.set_xticks([])
     ax_noise.set_yticks([])
@@ -259,6 +262,7 @@ def main():
     ax_save_wav = fig.add_axes([0.72, 0.154, 0.23, 0.045], facecolor='#2d2d2d')
     ax_save_png = fig.add_axes([0.72, 0.081, 0.23, 0.045], facecolor='#2d2d2d')
 
+    # Slider Instantiations
     s_dist  = Slider(ax_dist,  'Tx-Rx Distance (km)', 20.0, 200.0, valinit=init_dist,  valstep=1.0,  valfmt='%.0f km', color='lightgreen')
     s_hspec = Slider(ax_hspec, 'Specular Alt (km)',  85.0, 130.0, valinit=init_hspec, valstep=0.5,  valfmt='%.1f km', color='cyan')
     s_freq  = Slider(ax_freq,  'Carrier Frequency (MHz)',     30.0, 300.0, valinit=init_freq,  valstep=0.1,  valfmt='%.1f MHz', color='yellow')
@@ -270,6 +274,7 @@ def main():
     s_az    = Slider(ax_az,    'Azimuth (°)',         0.0,  360.0, valinit=init_azimuth,valstep=1.0, valfmt='%.0f°', color='deepskyblue')
     s_el    = Slider(ax_el,    'Elevation (°)',       0.0,  90.0,  valinit=init_elevation,valstep=1.0,valfmt='%.0f°', color='violet')
 
+    # Checkbox Selector Instantiation
     _chk_side_in = 0.34
     _fig_w_in, _fig_h_in = fig.get_size_inches()
     _chk_w = _chk_side_in / _fig_w_in
@@ -301,6 +306,7 @@ def main():
         chk_noise.set_frame_props({'s': [450], 'facecolor': ['#1f1f1f'], 'edgecolor': ['cyan'], 'linewidth': [1.5]})
         chk_noise.set_check_props({'s': [280], 'facecolor': ['cyan']})
 
+    # Button Instantiations
     btn_trigger  = Button(ax_trigger, 'Run Simulation', color='darkblue', hovercolor='blue')
     btn_trigger.label.set_color('white')
 
@@ -313,6 +319,7 @@ def main():
     btn_save_png = Button(ax_save_png, 'Save Spectrogram (.png)', color='#003344', hovercolor='#005577')
     btn_save_png.label.set_color('white')
 
+    # Apply Styling to Sliders
     for s in [s_dist, s_hspec, s_freq, s_skew, s_wind, s_fund, s_r2nd, s_r3rd, s_az, s_el]:
         s.label.set_color('white')
         s.valtext.set_color('white')
@@ -380,8 +387,7 @@ def main():
         ax_geom.set_xlabel("Horizontal Position x (km)", color='white')
         ax_geom.set_ylabel("Relative Altitude z (km)", color='white')
         
-        # Horizontal Position range updated to [-2.2, 2.2]
-        ax_geom.set_xlim(-2.2, 2.2)
+        ax_geom.set_xlim(-3.0, 3.0)
         ax_geom.set_ylim(-1.2, 1.2)
         ax_geom.tick_params(colors='white')
 
@@ -414,8 +420,7 @@ def main():
         ax_spec.set_ylabel("Doppler Offset (Hz) [Relative to Carrier]", color='white')
         ax_spec.set_ylim(CARRIER_FREQ - 120, CARRIER_FREQ + 120)
         
-        # Display full 60 seconds range
-        ax_spec.set_xlim(0, 60)
+        ax_spec.set_xlim(0, 12)
 
         ticks = np.linspace(CARRIER_FREQ - 120, CARRIER_FREQ + 120, 9)
         tick_labels = [f"{int(f - CARRIER_FREQ):+d} Hz" for f in ticks]
@@ -458,6 +463,7 @@ def main():
             print(f"Saved audio output to: {file_path}")
 
     def save_spectrogram_event(event):
+        """Export the Spectrogram plot alone as a high-resolution PNG image (600 DPI)."""
         root = tk.Tk()
         root.withdraw()
 
@@ -474,11 +480,13 @@ def main():
             fig.savefig(file_path, bbox_inches=extent.expanded(1.22, 1.25), dpi=600, facecolor=fig.get_facecolor())
             print(f"Saved high-resolution spectrogram plot image to: {file_path}")
 
+    # Attach Button Callbacks ONLY
     btn_trigger.on_clicked(update_plots)
     btn_play.on_clicked(play_audio_event)
     btn_save_wav.on_clicked(save_audio_event)
     btn_save_png.on_clicked(save_spectrogram_event)
 
+    # Initial plot generation on startup
     update_plots()
     plt.show()
 

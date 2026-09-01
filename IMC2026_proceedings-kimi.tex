@@ -67,7 +67,10 @@ For a set of trail points $\mathbf{p}_i$ sampled along the vertical coordinate $
 
 The echo amplitude is modulated by a global envelope $E(t)$ representing the combined effects of trail formation and diffusion:
 \begin{equation}
-    E(t) = \bigl[1 - e^{-(t-t_0)/\tau_{\mathrm{rise}}}\bigr] \cdot e^{-(t-t_0-t_{\mathrm{diff}})/\tau_{\mathrm{decay}}} \cdot H(t-t_0),
+\begin{aligned}
+    E(t) = {} & \bigl[1 - e^{-(t-t_0)/\tau_{\mathrm{rise}}}\bigr] \\
+              & \cdot e^{-(t-t_0-t_{\mathrm{diff}})/\tau_{\mathrm{decay}}} \cdot H(t-t_0)
+\end{aligned}
 \end{equation}
 where $t_0 = 2\,$s is the entry time, $\tau_{\mathrm{rise}} = 5\,$ms, $t_{\mathrm{diff}} = 3\,$s marks the onset of diffusion, and $\tau_{\mathrm{decay}} = 1\,$s. The Heaviside step $H$ ensures causality.
 

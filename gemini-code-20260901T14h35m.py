@@ -115,9 +115,9 @@ def synthesize_meteor_signal(
     global_envelope = np.zeros(num_samples)
     global_envelope[active_mask] = rise_env[active_mask] * decay_env[active_mask]
 
-    # 2. Altitude Layer Definition & Spatial Profile
+    # 2. Altitude Layer Definition & Spatial Profile [-1.5 km to +1.5 km]
     nz = 4000
-    z = np.linspace(-1.2, 1.2, nz)
+    z = np.linspace(-1.5, 1.5, nz)
     dz = z[1] - z[0]
 
     skew_rad = np.radians(skew_deg)
@@ -380,9 +380,9 @@ def main():
         ax_geom.set_xlabel("Horizontal Position x (km)", color='white')
         ax_geom.set_ylabel("Relative Altitude z (km)", color='white')
         
-        # Horizontal Position range updated to [-2.2, 2.2]
-        ax_geom.set_xlim(-2.2, 2.2)
-        ax_geom.set_ylim(-1.2, 1.2)
+        ax_geom.set_xlim(-3.0, 3.0)
+        # Relative Altitude range updated to [-1.5, 1.5]
+        ax_geom.set_ylim(-1.5, 1.5)
         ax_geom.tick_params(colors='white')
 
         for spine in ax_geom.spines.values():
