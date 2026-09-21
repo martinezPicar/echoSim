@@ -36,11 +36,14 @@ def build_forward_scatter_geometry(
     north = np.array([0.0, 1.0, 0.0])
     up = np.array([0.0, 0.0, 1.0])
 
-    xhat = np.sin(az) * east + np.cos(az) * north
-    xhat /= np.linalg.norm(xhat)
-
-    trajectory_dir = np.cos(el) * xhat + np.sin(el) * up
+    trajectory_dir = (
+        np.cos(el) * np.sin(az) * east +
+        np.cos(el) * np.cos(az) * north +
+        np.sin(el) * up
+    )
     trajectory_dir /= np.linalg.norm(trajectory_dir)
+
+    xhat_horizontal = np.array([np.sin(az), np.cos(az), 0.0])
 
     ref = np.array([0.0, 0.0, specular_altitude_km * 1000.0])
 
@@ -49,7 +52,7 @@ def build_forward_scatter_geometry(
 
     positions = (
         ref[None, :]
-        + (x_km * 1000.0)[:, None] * xhat[None, :]
+        + (x_km * 1000.0)[:, None] * xhat_horizontal[None, :]
         + (z_km * 1000.0)[:, None] * up[None, :]
     )
 
@@ -77,12 +80,12 @@ def build_forward_scatter_geometry(
     return (
         positions, tx_to_p, rx_to_p, beta, bisector,
         wavelength, specular_index, total_path,
-        trajectory_dir, ref, xhat, up
+        trajectory_dir, ref, xhat_horizontal, up
     )
 
 
 def synthesize_meteor_signal(
-    skew_deg, wind_speed, ratio_fund, ratio_2nd, ratio_3rd,
+    skew_deg, wind_speed, ratio_fund, ratio_2nd, ratio_3rd, ratio_4th,
     distance_km=50.0,
     meteor_azimuth_deg=45.0,
     meteor_elevation_deg=30.0,
@@ -96,10 +99,8 @@ def synthesize_meteor_signal(
 
     if frequency_hz <= 0.0:
         raise ValueError("frequency_hz must be positive")
-    wavelength_m = C_LIGHT / frequency_hz
 
     # 1. Event Timing & Delayed Diffusion Envelope
-    # Meteor starts at t = 20 s and active physics runs for 15 seconds (until t = 35 s)
     t_entry = 20.0
     meteor_duration = 15.0
     t_end = t_entry + meteor_duration
@@ -108,7 +109,7 @@ def synthesize_meteor_signal(
     t_active = np.maximum(0.0, t - t_entry)
 
     rise_env = 1.0 - np.exp(-t_active / 0.005)
-    t_diffusion_start = 1.0  # 1s after meteor entry (t = 21 s absolute)
+    t_diffusion_start = 1.0
     diffusion_time = np.maximum(0.0, t_active - t_diffusion_start)
     decay_env = np.exp(-diffusion_time / 1.0)
     
@@ -143,16 +144,17 @@ def synthesize_meteor_signal(
     specular_x_km = x0[specular_index]
     specular_beta_deg = np.degrees(beta[specular_index])
 
-    # Multi-Harmonic Wind Shear Field
+    # Multi-Harmonic Wind Shear Field (includes 4th Harmonic)
     v_fundamental = ratio_fund * np.sin(np.pi * z)
     v_2nd_harmonic = ratio_2nd * np.sin(2.0 * np.pi * z)
     v_3rd_harmonic = ratio_3rd * np.sin(3.0 * np.pi * z)
-    v_wind = wind_speed * (v_fundamental + v_2nd_harmonic + v_3rd_harmonic)
+    v_4th_harmonic = ratio_4th * np.sin(4.0 * np.pi * z)
+    v_wind = wind_speed * (v_fundamental + v_2nd_harmonic + v_3rd_harmonic + v_4th_harmonic)
     dv_dz = np.gradient(v_wind, dz)
 
     v_entry = 8.0 * np.sin(2.0 * np.pi * z) + (15.0 * initial_tilt_slope)
 
-    # 3. Dynamic Signal Synthesis (Only calculated for the 15 s active window)
+    # 3. Dynamic Signal Synthesis
     phase_z = np.zeros(nz)
     echo_signal = np.zeros(num_samples)
 
@@ -160,6 +162,7 @@ def synthesize_meteor_signal(
     tau_shear_growth = 0.40
 
     active_indices = np.where(active_mask)[0]
+    wind_dir_enu = np.array([1.0, 0.0, 0.0])
 
     for i in active_indices:
         tau = t_active[i]
@@ -168,16 +171,9 @@ def synthesize_meteor_signal(
         weight_shear = 1.0 - np.exp(-tau / tau_shear_growth)
         
         v_horizontal = (weight_ping * v_entry) + (weight_shear * v_wind)
+        velocity_ecef = v_horizontal[:, None] * wind_dir_enu[None, :]
 
-        el_rad = np.radians(meteor_elevation_deg)
-        velocity_ecef = v_horizontal[:, None] * (
-            np.cos(el_rad) * trajectory_xhat[None, :]
-            + np.sin(el_rad) * trajectory_up[None, :]
-        )
-
-        doppler_z = np.sum(
-            velocity_ecef * bistatic_bisector, axis=1
-        ) / wavelength_m
+        doppler_z = np.sum(velocity_ecef * bistatic_bisector, axis=1) / wavelength_m
 
         shear_deformation_time = tau * weight_shear * 0.0025
         dxdz_t = dx0_dz + (dv_dz * shear_deformation_time)
@@ -199,7 +195,7 @@ def synthesize_meteor_signal(
     if max_echo > 0:
         echo_signal = echo_signal / max_echo
 
-    # 4. Fill before/after regions with noise or silence
+    # 4. Background noise handling
     if add_noise:
         snr_lin = 10 ** (snr_db / 10.0)
         signal_power = np.mean(echo_signal[active_mask]**2) if np.any(active_mask) else 1.0
@@ -219,7 +215,7 @@ def synthesize_meteor_signal(
 
 def main():
     SAMPLE_RATE = 22050
-    DURATION = 60.0  # Total timeline extended to 60 seconds
+    DURATION = 60.0
     CARRIER_FREQ = 1000.0
 
     init_dist  = 50.0   
@@ -230,6 +226,7 @@ def main():
     init_fund  = 1.00
     init_r2nd  = 0.00
     init_r3rd  = 0.10
+    init_r4th  = 0.00
     init_azimuth = 180.0
     init_elevation = 45.0
 
@@ -239,19 +236,20 @@ def main():
     ax_geom = fig.add_axes([0.05, 0.48, 0.415, 0.46], facecolor='#050515')
     ax_spec = fig.add_axes([0.535, 0.48, 0.415, 0.46], facecolor='navy')
 
-    # Shorter horizontal width (slider_w = 0.38) and repositioned x-axis
-    slider_w = 0.40 #0.38
+    # Reduced slider width (slider_w = 0.38) and adjusted heights to fit 11 sliders cleanly
+    slider_w = 0.38
     slider_x = 0.16
-
-    ax_dist  = fig.add_axes([slider_x, 0.400, slider_w, 0.016], facecolor='#1f1f1f')
-    ax_hspec = fig.add_axes([slider_x, 0.365, slider_w, 0.016], facecolor='#1f1f1f')
-    ax_freq  = fig.add_axes([slider_x, 0.330, slider_w, 0.016], facecolor='#1f1f1f')
-    ax_skew  = fig.add_axes([slider_x, 0.295, slider_w, 0.016], facecolor='#1f1f1f')
-    ax_wind  = fig.add_axes([slider_x, 0.260, slider_w, 0.016], facecolor='#1f1f1f')
-    ax_fund  = fig.add_axes([slider_x, 0.225, slider_w, 0.016], facecolor='#1f1f1f')
-    ax_r2nd  = fig.add_axes([slider_x, 0.190, slider_w, 0.016], facecolor='#1f1f1f')
-    ax_r3rd  = fig.add_axes([slider_x, 0.155, slider_w, 0.016], facecolor='#1f1f1f')
-    ax_az    = fig.add_axes([slider_x, 0.120, slider_w, 0.016], facecolor='#1f1f1f')
+    
+    ax_dist  = fig.add_axes([slider_x, 0.405, slider_w, 0.016], facecolor='#1f1f1f')
+    ax_hspec = fig.add_axes([slider_x, 0.373, slider_w, 0.016], facecolor='#1f1f1f')
+    ax_freq  = fig.add_axes([slider_x, 0.341, slider_w, 0.016], facecolor='#1f1f1f')
+    ax_skew  = fig.add_axes([slider_x, 0.309, slider_w, 0.016], facecolor='#1f1f1f')
+    ax_wind  = fig.add_axes([slider_x, 0.277, slider_w, 0.016], facecolor='#1f1f1f')
+    ax_fund  = fig.add_axes([slider_x, 0.245, slider_w, 0.016], facecolor='#1f1f1f')
+    ax_r2nd  = fig.add_axes([slider_x, 0.213, slider_w, 0.016], facecolor='#1f1f1f')
+    ax_r3rd  = fig.add_axes([slider_x, 0.181, slider_w, 0.016], facecolor='#1f1f1f')
+    ax_r4th  = fig.add_axes([slider_x, 0.149, slider_w, 0.016], facecolor='#1f1f1f')
+    ax_az    = fig.add_axes([slider_x, 0.117, slider_w, 0.016], facecolor='#1f1f1f')
     ax_el    = fig.add_axes([slider_x, 0.085, slider_w, 0.016], facecolor='#1f1f1f')
 
     ax_noise    = fig.add_axes([0.72, 0.373, 0.23, 0.045], facecolor='#000000')
@@ -263,16 +261,18 @@ def main():
     ax_save_wav = fig.add_axes([0.72, 0.154, 0.23, 0.045], facecolor='#2d2d2d')
     ax_save_png = fig.add_axes([0.72, 0.081, 0.23, 0.045], facecolor='#2d2d2d')
 
+    # Slider definitions with unit labels removed from the left-side names
     s_dist  = Slider(ax_dist,  'Tx-Rx Distance', 20.0, 200.0, valinit=init_dist,  valstep=1.0,  valfmt='%.0f km', color='lightgreen')
     s_hspec = Slider(ax_hspec, 'Specular Alt',  85.0, 130.0, valinit=init_hspec, valstep=0.5,  valfmt='%.1f km', color='cyan')
-    s_freq  = Slider(ax_freq,  'Carrier Frequency',     30.0, 300.0, valinit=init_freq,  valstep=0.1,  valfmt='%.1f MHz', color='yellow')
+    s_freq  = Slider(ax_freq,  'Carrier Frequency', 30.0, 300.0, valinit=init_freq,  valstep=0.1,  valfmt='%.1f MHz', color='yellow')
     s_skew  = Slider(ax_skew,  'Trail Skew',      1.0,  45.0,  valinit=init_skew,  valstep=0.5,  valfmt='%.1f°',   color='coral')
     s_wind  = Slider(ax_wind,  'Wind Speed',    20.0, 150.0, valinit=init_wind,  valstep=1.0,  valfmt='%.0f m/s', color='lime')
-    s_fund  = Slider(ax_fund,  'Fundamental Ratio',   0.0,  1.0,   valinit=init_fund,  valstep=0.01, valfmt='%.2f',    color='gold')
-    s_r2nd  = Slider(ax_r2nd,  '2nd Harmonic Ratio',  0.0,  1.0,   valinit=init_r2nd,  valstep=0.01, valfmt='%.2f',    color='magenta')
-    s_r3rd  = Slider(ax_r3rd,  '3rd Harmonic Ratio',  0.0,  1.0,   valinit=init_r3rd,  valstep=0.01, valfmt='%.2f',    color='orange')
-    s_az    = Slider(ax_az,    'Azimuth (°)',         0.0,  360.0, valinit=init_azimuth,valstep=1.0, valfmt='%.0f°', color='deepskyblue')
-    s_el    = Slider(ax_el,    'Elevation (°)',       0.0,  90.0,  valinit=init_elevation,valstep=1.0,valfmt='%.0f°', color='violet')
+    s_fund  = Slider(ax_fund,  'Fundamental Ratio', 0.0, 1.0, valinit=init_fund,  valstep=0.01, valfmt='%.2f',    color='gold')
+    s_r2nd  = Slider(ax_r2nd,  '2nd Harmonic Ratio',0.0, 1.0, valinit=init_r2nd,  valstep=0.01, valfmt='%.2f',    color='magenta')
+    s_r3rd  = Slider(ax_r3rd,  '3rd Harmonic Ratio',0.0, 1.0, valinit=init_r3rd,  valstep=0.01, valfmt='%.2f',    color='orange')
+    s_r4th  = Slider(ax_r4th,  '4th Harmonic Ratio',0.0, 1.0, valinit=init_r4th,  valstep=0.01, valfmt='%.2f',    color='plum')
+    s_az    = Slider(ax_az,    'Azimuth',         0.0, 360.0, valinit=init_azimuth,valstep=1.0, valfmt='%.0f°', color='deepskyblue')
+    s_el    = Slider(ax_el,    'Elevation',       0.0,  90.0, valinit=init_elevation,valstep=1.0,valfmt='%.0f°', color='violet')
 
     _chk_side_in = 0.34
     _fig_w_in, _fig_h_in = fig.get_size_inches()
@@ -317,7 +317,7 @@ def main():
     btn_save_png = Button(ax_save_png, 'Save Spectrogram (.png)', color='#003344', hovercolor='#005577')
     btn_save_png.label.set_color('white')
 
-    for s in [s_dist, s_hspec, s_freq, s_skew, s_wind, s_fund, s_r2nd, s_r3rd, s_az, s_el]:
+    for s in [s_dist, s_hspec, s_freq, s_skew, s_wind, s_fund, s_r2nd, s_r3rd, s_r4th, s_az, s_el]:
         s.label.set_color('white')
         s.valtext.set_color('white')
 
@@ -338,6 +338,7 @@ def main():
         fund      = s_fund.val
         r2nd      = s_r2nd.val
         r3rd      = s_r3rd.val
+        r4th      = s_r4th.val
         azimuth   = s_az.val
         elevation = s_el.val
 
@@ -352,6 +353,7 @@ def main():
             ratio_fund=fund,
             ratio_2nd=r2nd,
             ratio_3rd=r3rd,
+            ratio_4th=r4th,
             distance_km=dist_km,
             meteor_azimuth_deg=azimuth,
             meteor_elevation_deg=elevation,
@@ -376,23 +378,17 @@ def main():
             x_t = x0 + (v_wind * tau_step * 0.0025)
             ax_geom.plot(x_t, z, color=col, linewidth=2.0, label=f't = {tau_step:.1f}s')
 
-#        ax_geom.set_title(
-#            f"Trail Deformation | $d$={dist_km:.0f} km | $h_{{\\mathrm{{spec}}}}$={hspec_km:.1f} km | Skew={skew:.1f}° | "
-#            f"$V_{{\\mathrm{wind}}}$={wind:.1f} km/h | $\\beta$={specular_beta_deg:.1f}°",
-#            color='white', fontsize=10
-#        )
         ax_geom.set_title(
             rf"Trail Deformation | $d$ = {dist_km:.0f} km | "
             rf"$h_\mathrm{{spec}}$ = {hspec_km:.1f} km | "
             rf"Skew = {skew:.1f}$^\circ$ | "
-            rf"$V_\mathrm{{wind}}$ = {wind:.1f} km/h | "
+            rf"$V_\mathrm{{wind}}$ = {wind:.1f} m/s | "
             rf"$\beta$ = {specular_beta_deg:.1f}$^\circ$",
-    color='white', fontsize=10
-)
+            color='white', fontsize=10
+        )
         ax_geom.set_xlabel("Horizontal Position x (km)", color='white')
         ax_geom.set_ylabel("Relative Altitude z (km)", color='white')
         
-        # Horizontal Position range updated to [-2.2, 2.2]
         ax_geom.set_xlim(-2.2, 2.2)
         ax_geom.set_ylim(-1.2, 1.2)
         ax_geom.tick_params(colors='white')
@@ -419,15 +415,13 @@ def main():
 
         ax_spec.set_title(
             f"Spectrogram | $f_0$={freq_mhz:.1f} MHz | $d$={dist_km:.0f} km | $h_{{\\mathrm{{spec}}}}$={hspec_km:.0f} km | "
-            #f"Az:{azimuth:.0f}° El:{elevation:.0f}°",
-            f"$\\alpha$={azimuth:.0f}°; $\\eta$={elevation:.0f}° | Coeff: {fund};{r2nd};{r3rd}",
+            f"Az:{azimuth:.0f}° El:{elevation:.0f}°",
             color='white', fontsize=10
         )
         ax_spec.set_xlabel("Time (seconds)", color='white')
         ax_spec.set_ylabel("Doppler Offset (Hz) [Relative to Carrier]", color='white')
         ax_spec.set_ylim(CARRIER_FREQ - 120, CARRIER_FREQ + 120)
         
-        # Display full 60 seconds range
         ax_spec.set_xlim(0, 60)
 
         ticks = np.linspace(CARRIER_FREQ - 120, CARRIER_FREQ + 120, 9)
