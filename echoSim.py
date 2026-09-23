@@ -420,7 +420,7 @@ def main():
         ax_spec.set_title(
             f"Spectrogram | $f_0$={freq_mhz:.1f} MHz | $d$={dist_km:.0f} km | $h_{{\\mathrm{{spec}}}}$={hspec_km:.0f} km | "
             #f"Az:{azimuth:.0f}° El:{elevation:.0f}°",
-            f"$\\alpha$={azimuth:.0f}°; $\\eta$={elevation:.0f}° | Coeff: {fund};{r2nd};{r3rd}",
+            f"$\\alpha$={azimuth:.0f}°; $\\eta$={elevation:.0f}° | Coeff: {fund:.2f};{r2nd:.2f};{r3rd:.2f}",
             color='white', fontsize=10
         )
         ax_spec.set_xlabel("Time (seconds)", color='white')
