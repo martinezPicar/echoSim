@@ -48,7 +48,7 @@ Horizontal wind velocity along the trail altitude coordinate `z` is modeled as a
 **multi-harmonic sine series**:
 
 $
-v(z) = v_{\mathrm{wind}} [a_1 \sin(\pi z) + a_2 \sin(2\pi z) + a_3 \sin (3\pi z)]
+v(z) = v_{\mathrm{wind}} [a_1 \sin(\pi z) + a_2 \sin(2 \pi z) + a_3 \sin (3 \pi z)]
 $
 
 - $a_1$ — fundamental (main shear) ratio
@@ -72,7 +72,7 @@ Key mechanisms:
 
 - **Envelope** — fast rise ($\tau_{\mathrm{rise}} \approx5~\mathrm{ms}$), diffusion decay starting 1 s after entry
 - **Ping vs. shear blending** — initial specular response (meteor head/entry velocity
-  profile `v_entry`) decays with $\tau = 0.12~\mathrm{s}$, while the wind-shear-driven trail echo
+  profile $v_{\mathrm{entry}}$) decays with $\tau = 0.12~\mathrm{s}$, while the wind-shear-driven trail echo
   grows in with $\tau \approx 0.40~\mathrm{s}$
 - **Trail deformation** — the initial trail tilt (*skew* angle $\sigma$) accumulates additional
   $dv/dz$ deformation over time
@@ -146,7 +146,7 @@ sliders, then **Play Audio**, **Save Audio File (.wav)**, or **Save Spectrogram 
 ### Left — Trail Deformation
 
 Plots horizontal position $x$ vs. relative altitude $z$ for the initial trail (dashed white)
-and four deformed snapshots ($t = 1.5, 3.0, 4.5, 6.0~\mathrm{s}$) colored by the spring colormap.
+and four deformed snapshots $(t = 1.5, 3.0, 4.5, 6.0~\mathrm{s})$ colored by the spring colormap.
 Title reports current geometry and the specular bistatic angle $\beta$.
 
 ### Right — Spectrogram
