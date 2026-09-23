@@ -271,8 +271,8 @@ def main():
     s_fund  = Slider(ax_fund,  'Fundamental Ratio',   0.0,  1.0,   valinit=init_fund,  valstep=0.01, valfmt='%.2f',    color='gold')
     s_r2nd  = Slider(ax_r2nd,  '2nd Harmonic Ratio',  0.0,  1.0,   valinit=init_r2nd,  valstep=0.01, valfmt='%.2f',    color='magenta')
     s_r3rd  = Slider(ax_r3rd,  '3rd Harmonic Ratio',  0.0,  1.0,   valinit=init_r3rd,  valstep=0.01, valfmt='%.2f',    color='orange')
-    s_az    = Slider(ax_az,    'Azimuth (°)',         0.0,  360.0, valinit=init_azimuth,valstep=1.0, valfmt='%.0f°', color='deepskyblue')
-    s_el    = Slider(ax_el,    'Elevation (°)',       0.0,  90.0,  valinit=init_elevation,valstep=1.0,valfmt='%.0f°', color='violet')
+    s_az    = Slider(ax_az,    'Azimuth ($\\alpha$)',         0.0,  360.0, valinit=init_azimuth,valstep=1.0, valfmt='%.0f°', color='deepskyblue')
+    s_el    = Slider(ax_el,    'Elevation ($\\eta$)',       0.0,  90.0,  valinit=init_elevation,valstep=1.0,valfmt='%.0f°', color='violet')
 
     _chk_side_in = 0.34
     _fig_w_in, _fig_h_in = fig.get_size_inches()
