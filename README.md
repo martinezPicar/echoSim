@@ -47,7 +47,7 @@ A generalized bistatic geometry is constructed by `build_forward_scatter_geometr
 Horizontal wind velocity along the trail altitude coordinate `z` is modeled as a
 **multi-harmonic sine series**:
 
-$v(z) = v_{\mathrm{wind}} [a_1 \sin(\pi z) + a_2 \sin(2 \pi z) + a_3 \sin (3 \pi z)$
+$v(z) = v_{\mathrm{wind}} [a_1 \sin(\pi z) + a_2 \sin(2 \pi z) + a_3 \sin (3 \pi z)]$
 
 - $a_1$ — fundamental (main shear) ratio
 - $a_2$ — second harmonic ratio
