@@ -385,7 +385,7 @@ def main():
             rf"Trail Deformation | $d$ = {dist_km:.0f} km | "
             rf"$h_\mathrm{{spec}}$ = {hspec_km:.1f} km | "
             rf"Skew = {skew:.1f}$^\circ$ | "
-            rf"$V_\mathrm{{wind}}$ = {wind:.1f} km/h | "
+            rf"$V_\mathrm{{wind}}$ = {wind:.1f} m/s | "
             rf"$\beta$ = {specular_beta_deg:.1f}$^\circ$",
     color='white', fontsize=10
 )
