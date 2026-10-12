@@ -100,10 +100,10 @@ $\tau_{\mathrm{decay}} = 1$ s, $T_{\mathrm{active}} = 15$ s.
 
 | Phase | Time window | Behavior |
 |-------|-------------|----------|
-| Background | t < 20~s | Pure background noise (if enabled) |
-| Meteor entry | t = 20~s ($\tau$~=~0) | Exponential rise; fast decay of the initial "ping" |
-| Active echo | 20~s ≤ t < 35~s | Diffusion-limited decay; wind shear progressively deforms the trail |
-| Background | t ≥ 35~s | Pure background noise (if enabled) |
+| Background | t < 20&nbsp;s | Pure background noise (if enabled) |
+| Meteor entry | t = 20~s ($\tau$&nbsp;=&nbsp;0) | Exponential rise; fast decay of the initial "ping" |
+| Active echo | 20&nbsp;s ≤ t < 35&nbsp;s | Diffusion-limited decay; wind shear progressively deforms the trail |
+| Background | t ≥ 35&nbsp;s | Pure background noise (if enabled) |
 
 #### Ping vs. shear blending
 
@@ -137,7 +137,7 @@ $$w_i(\tau) = \exp \left[-\frac{(dx/dz)_i^2}{A(\tau)}\right]$$
 
 with instantaneous trail slope
 
-$$\left(\frac{dx}{dz}\right)_i = \left(\frac{dx_0}{dz}\right)_i + \left(\frac{dv}{dz}\right)_i \, \tau \left(1 - e^{-\tau/\tau_{\mathrm{shear}}}\right) 0.0025$$
+$$\left(\frac{dx}{dz}\right)_i = \left(\frac{dx_0}{dz}\right)_i + \left(\frac{dv}{dz}\right)_i \tau \left(1 - e^{-\tau/\tau_{\mathrm{shear}}}\right) 0.0025$$
 
 (the factor 0.0025 is an empirical unit-conversion scaling for the $(\mathrm{m/s})/\mathrm{km}$
 shear rate), and time-dependent aperture
