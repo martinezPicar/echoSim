@@ -101,7 +101,7 @@ $\tau_{\mathrm{decay}} = 1$ s, $T_{\mathrm{active}} = 15$ s.
 | Phase | Time window | Behavior |
 |-------|-------------|----------|
 | Background | t < 20&nbsp;s | Pure background noise (if enabled) |
-| Meteor entry | t = 20~s ($\tau$&nbsp;=&nbsp;0) | Exponential rise; fast decay of the initial "ping" |
+| Meteor entry | t = 20&nbsp;s ($\tau$&nbsp;=&nbsp;0) | Exponential rise; fast decay of the initial "ping" |
 | Active echo | 20&nbsp;s ≤ t < 35&nbsp;s | Diffusion-limited decay; wind shear progressively deforms the trail |
 | Background | t ≥ 35&nbsp;s | Pure background noise (if enabled) |
 
