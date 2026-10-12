@@ -100,21 +100,21 @@ $\tau_{\mathrm{decay}} = 1$ s, $T_{\mathrm{active}} = 15$ s.
 
 | Phase | Time window | Behavior |
 |-------|-------------|----------|
-| Background | t < 20 s | Pure background noise (if enabled) |
-| Meteor entry | t = 20 s ($\tau = 0$) | Exponential rise; fast decay of the initial "ping" |
-| Active echo | 20 s ≤ t < 35 s | Diffusion-limited decay; wind shear progressively deforms the trail |
-| Background | t ≥ 35 s | Pure background noise (if enabled) |
+| Background | t < 20~s | Pure background noise (if enabled) |
+| Meteor entry | t = 20~s ($\tau$~=~0) | Exponential rise; fast decay of the initial "ping" |
+| Active echo | 20~s ≤ t < 35~s | Diffusion-limited decay; wind shear progressively deforms the trail |
+| Background | t ≥ 35~s | Pure background noise (if enabled) |
 
 #### Ping vs. shear blending
 
 At each time $\tau$ after trail formation, the horizontal velocity field is formed from a decaying
 entry component and a growing wind-shear component:
 
-$$v_{\mathrm{hor}}(\tau) = e^{-\tau / \tau_{\mathrm{ping}}}\, v_{\mathrm{entry}} + \left(1 - e^{-\tau / \tau_{\mathrm{shear}}}\right) v(z)$$
+$$v_{\mathrm{hor}}(\tau) = e^{-\tau / \tau_{\mathrm{ping}}} v_{\mathrm{entry}} + \left(1 - e^{-\tau / \tau_{\mathrm{shear}}}\right) v(z)$$
 
 with $\tau_{\mathrm{ping}} = 0.12$ s and $\tau_{\mathrm{shear}} = 0.40$ s. The entry velocity is
 
-$$v_{\mathrm{entry}}(z) = 8 \sin(2\pi z) + 15 \tan\sigma \quad \mathrm{(m/s)}$$
+$$v_{\mathrm{entry}}(z) = 8 \sin(2\pi z) + 15 \tan(\sigma) \quad \mathrm{(m/s)}$$
 
 The two time-dependent coefficients are applied independently and do not form a normalized interpolation.
 
@@ -122,7 +122,7 @@ The two time-dependent coefficients are applied independently and do not form a 
 
 The 3-D velocity at each trail point is
 
-$$\mathbf{v}_i = v_{\mathrm{hor},i}\,\bigl(\cos\eta\,\hat{\mathbf{x}} + \sin\eta\,\hat{\mathbf{z}}\bigr)$$
+$$\mathbf{v}_i = v_{\mathrm{hor},i} \bigl(\cos\eta \hat{\mathbf{x}} + \sin\eta \hat{\mathbf{z}}\bigr)$$
 
 and the instantaneous Doppler shift is the projection onto the bistatic bisector, normalized by
 the wavelength $\lambda = c/f_0$:
@@ -133,7 +133,7 @@ $$f_{\mathrm{D},i} = \frac{\mathbf{v}_i \cdot \hat{\mathbf{b}}_i}{\lambda}$$
 
 The contribution of each trail segment is weighted by a Gaussian specularity factor
 
-$$w_i(\tau) = \exp\!\left[-\frac{(dx/dz)_i^2}{A(\tau)}\right]$$
+$$w_i(\tau) = \exp \left[-\frac{(dx/dz)_i^2}{A(\tau)}\right]$$
 
 with instantaneous trail slope
 
