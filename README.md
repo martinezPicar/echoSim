@@ -45,7 +45,7 @@ observational data.
 A generalized bistatic Tx–Rx geometry is constructed by `build_forward_scatter_geometry()`,
 parameterized by baseline distance $d$, specular altitude $h_{\mathrm{spec}}$, meteor azimuth
 $\alpha$ and elevation $\eta$. Tx and Rx sit symmetrically at $\mp d/2$ relative to a reference
-point $\mathbf{r}_{\mathrm{ref}} = (0, 0, h_{\mathrm{spec}})$.
+point $p_{\mathrm{ref}} = (0, 0, h_{\mathrm{spec}})$.
 
 The horizontal meteor direction and the 3-D trajectory direction are
 
@@ -57,7 +57,7 @@ where $\hat{\mathbf{e}}$, $\hat{\mathbf{n}}$, $\hat{\mathbf{z}}$ are the east, n
 vectors. The trail is uniformly sampled at **4000 points** over $z \in [-1.2, +1.2]$ km, and each
 trail point is placed at
 
-$$\mathbf{p}(z) = \mathbf{r}_{\mathrm{ref}} + x_0(z)\,\hat{\mathbf{x}} + z\,\hat{\mathbf{z}}$$
+$$\mathbf{p}(z) = \mathbf{r}_{\mathrm{ref}} + x_0(z)\hat{\mathbf{x}} + z\hat{\mathbf{z}}$$
 
 where $x_0(z) = z \tan\sigma$ is the initial horizontal offset produced by the **trail skew
 angle** $\sigma$ (initial tilt of the ionized trail relative to the local vertical, in the plane
@@ -110,15 +110,13 @@ $\tau_{\mathrm{decay}} = 1$ s, $T_{\mathrm{active}} = 15$ s.
 At each time $\tau$ after trail formation, the horizontal velocity field is formed from a decaying
 entry component and a growing wind-shear component:
 
-$$v_{\mathrm{hor}}(\tau) = e^{-\tau/\tau_{\mathrm{ping}}}\, v_{\mathrm{entry}}
-+ \left(1 - e^{-\tau/\tau_{\mathrm{shear}}}\right)\, v(z)$$
+$$v_{\mathrm{hor}}(\tau) = e^{-\tau / \tau_{\mathrm{ping}}}\, v_{\mathrm{entry}} + \left(1 - e^{-\tau / \tau_{\mathrm{shear}}}\right) v(z)$$
 
 with $\tau_{\mathrm{ping}} = 0.12$ s and $\tau_{\mathrm{shear}} = 0.40$ s. The entry velocity is
 
 $$v_{\mathrm{entry}}(z) = 8 \sin(2\pi z) + 15 \tan\sigma \quad \mathrm{(m/s)}$$
 
-The two time-dependent coefficients are applied independently and do not form a normalized
-interpolation.
+The two time-dependent coefficients are applied independently and do not form a normalized interpolation.
 
 #### Doppler shift
 
@@ -139,8 +137,7 @@ $$w_i(\tau) = \exp\!\left[-\frac{(dx/dz)_i^2}{A(\tau)}\right]$$
 
 with instantaneous trail slope
 
-$$\left(\frac{dx}{dz}\right)_i = \left(\frac{dx_0}{dz}\right)_i
-+ \left(\frac{dv}{dz}\right)_i \, \tau \left(1 - e^{-\tau/\tau_{\mathrm{shear}}}\right) 0.0025$$
+$$\left(\frac{dx}{dz}\right)_i = \left(\frac{dx_0}{dz}\right)_i + \left(\frac{dv}{dz}\right)_i \, \tau \left(1 - e^{-\tau/\tau_{\mathrm{shear}}}\right) 0.0025$$
 
 (the factor 0.0025 is an empirical unit-conversion scaling for the $(\mathrm{m/s})/\mathrm{km}$
 shear rate), and time-dependent aperture
@@ -336,6 +333,7 @@ images of his "Meteor Ping Simulator"
 [published online](https://g3zjoradio.wordpress.com/2017/11/25/in-persuit-of-c-shape-meteor-reflections/)
 by **Eddie Bennett (G3ZJO)**.
 
+<!--
 ## References
 
 - Belkovich, O. I. (2006). "The physics of backscattering of radio waves from ionized meteor
@@ -344,3 +342,4 @@ by **Eddie Bennett (G3ZJO)**.
   Meteor Conference 2010, Armagh, Northern Ireland, UK.
 - Steyaert, C. (2012). "Epsilons: we need more theories." In *Proceedings of the International
   Meteor Conference*, 30th IMC, Sibiu, Romania, 2011, pp. 64–68.
+-->
