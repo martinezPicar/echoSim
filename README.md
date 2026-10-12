@@ -49,9 +49,9 @@ point $p_{\mathrm{ref}} = (0, 0, h_{\mathrm{spec}})$.
 
 The horizontal meteor direction and the 3-D trajectory direction are
 
-$$\hat{\mathbf{x}} = \sin\alpha\,\hat{\mathbf{e}} + \cos\alpha\,\hat{\mathbf{n}},
+$$\hat{\mathbf{x}} = \sin\alpha \hat{\mathbf{e}} + \cos\alpha \hat{\mathbf{n}},
 \qquad
-\hat{\mathbf{t}} = \cos\eta\,\hat{\mathbf{x}} + \sin\eta\,\hat{\mathbf{z}}$$
+\hat{\mathbf{t}} = \cos\eta \hat{\mathbf{x}} + \sin\eta \hat{\mathbf{z}}$$
 
 where $\hat{\mathbf{e}}$, $\hat{\mathbf{n}}$, $\hat{\mathbf{z}}$ are the east, north and up unit
 vectors. The trail is uniformly sampled at **4000 points** over $z \in [-1.2, +1.2]$ km, and each
